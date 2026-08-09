@@ -1,37 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Bot,
-  Boxes,
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  Circle,
-  Database,
-  File,
-  FileSpreadsheet,
-  FileText,
-  FolderOpen,
-  GitBranch,
-  Inbox,
-  Loader2,
-  Mail,
-  MoreHorizontal,
-  Play,
-  Plus,
-  Route as RouteIcon,
-  Search,
-  Settings2,
-  Sparkles,
-  Trash2,
-  Upload,
-  UserCheck,
-  X,
-  Zap,
-} from "lucide-react";
+  Add01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  BotIcon,
+  BoxesIcon,
+  Cancel01Icon,
+  CheckIcon,
+  CheckmarkCircle02Icon,
+  ChevronRightIcon,
+  CircleIcon,
+  Database01Icon,
+  File01Icon,
+  FolderOpenIcon,
+  GitBranchIcon,
+  InboxIcon,
+  Loading01Icon,
+  Mail01Icon,
+  PlayIcon,
+  Route01Icon,
+  Settings02Icon,
+  SparklesIcon,
+  Upload01Icon,
+  UserCheck01Icon,
+} from "@hugeicons/core-free-icons";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Background,
@@ -164,20 +159,18 @@ function Button({
 
 function SystemMark({ name }: { name: string }) {
   const icon =
-    name === "Gmail" ? (
-      <Mail />
-    ) : name === "Google Drive" ? (
-      <FolderOpen />
-    ) : name === "Slack" ? (
-      <Inbox />
-    ) : name === "Salesforce" ? (
-      <Database />
-    ) : (
-      <Boxes />
-    );
+    name === "Gmail"
+      ? Mail01Icon
+      : name === "Google Drive"
+        ? FolderOpenIcon
+        : name === "Slack"
+          ? InboxIcon
+          : name === "Salesforce"
+            ? Database01Icon
+            : BoxesIcon;
   return (
     <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-black/[.055] text-[#555550] [&_svg]:h-4 [&_svg]:w-4">
-      {icon}
+      <HugeiconsIcon icon={icon} />
     </span>
   );
 }
@@ -289,7 +282,8 @@ function Onboarding({
                     }
                     className="pressable mt-5 inline-flex items-center gap-1.5 text-[12px] font-medium text-[#555550] hover:text-black"
                   >
-                    Explore with Amazonik <ArrowRight size={13} />
+                    Explore with Amazonik{" "}
+                    <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
                   </button>
                 </div>
                 <div className="mt-12 grid gap-5 md:grid-cols-2">
@@ -377,7 +371,7 @@ function Onboarding({
                       }}
                       className="pressable flex h-[126px] w-full flex-col items-center justify-center rounded-[20px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.04),0_12px_35px_rgba(0,0,0,.035)]"
                     >
-                      <Upload size={19} />
+                      <HugeiconsIcon icon={Upload01Icon} size={19} />
                       <span className="mt-3 text-[12px] font-medium">
                         Choose files or drop them here
                       </span>
@@ -391,7 +385,11 @@ function Onboarding({
                           key={f.name}
                           className="flex items-center gap-3 rounded-[14px] bg-white px-3 py-2.5"
                         >
-                          <FileText size={14} className="text-[#777772]" />
+                          <HugeiconsIcon
+                            icon={File01Icon}
+                            size={14}
+                            className="text-[#777772]"
+                          />
                           <span className="min-w-0 flex-1 truncate text-[11px]">
                             {f.name}
                           </span>
@@ -403,7 +401,7 @@ function Onboarding({
                               setFiles((v) => v.filter((_, x) => x !== i))
                             }
                           >
-                            <X size={13} />
+                            <HugeiconsIcon icon={Cancel01Icon} size={13} />
                           </button>
                         </div>
                       ))}
@@ -425,12 +423,14 @@ function Onboarding({
                               {name}
                             </span>
                             {active ? (
-                              <CheckCircle2
+                              <HugeiconsIcon
+                                icon={CheckmarkCircle02Icon}
                                 className="ml-auto text-[#75cb8a]"
                                 size={15}
                               />
                             ) : (
-                              <Plus
+                              <HugeiconsIcon
+                                icon={Add01Icon}
                                 className="ml-auto text-[#aaa9a4]"
                                 size={14}
                               />
@@ -454,7 +454,7 @@ function Onboarding({
             onClick={() => setStep(0)}
             className={`pressable flex items-center gap-2 text-[12px] font-medium ${step === 0 ? "invisible" : ""}`}
           >
-            <ArrowLeft size={14} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={14} />
             Back
           </button>
           <Button
@@ -465,11 +465,12 @@ function Onboarding({
           >
             {step === 0 ? (
               <>
-                Continue <ArrowRight size={14} />
+                Continue <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
               </>
             ) : (
               <>
-                <Sparkles size={14} /> Find opportunities
+                <HugeiconsIcon icon={SparklesIcon} size={14} /> Find
+                opportunities
               </>
             )}
           </Button>
@@ -547,17 +548,17 @@ function Sidebar({
         {(["Routes", "Opportunities", "Sources"] as View[]).map((name) => {
           const Icon =
             name === "Routes"
-              ? RouteIcon
+              ? Route01Icon
               : name === "Opportunities"
-                ? Sparkles
-                : Database;
+                ? SparklesIcon
+                : Database01Icon;
           return (
             <button
               key={name}
               onClick={() => (name === "Routes" ? showRoutes() : setView(name))}
               className={`pressable flex h-10 w-full items-center gap-3 rounded-[11px] px-3 text-[13px] transition ${view === name ? "bg-black/[.065] font-medium" : "text-[#70706b] hover:bg-black/[.035]"}`}
             >
-              <Icon size={16} strokeWidth={1.7} />
+              <HugeiconsIcon icon={Icon} size={16} strokeWidth={1.7} />
               {name}
               {name === "Opportunities" && (
                 <span className="ml-auto text-[11px] text-[#999994]">6</span>
@@ -594,7 +595,7 @@ function Sidebar({
           onClick={reset}
           className="pressable flex w-full items-center gap-3 rounded-[11px] px-3 py-2.5 text-[11px] text-[#777772] hover:bg-black/[.04]"
         >
-          <Settings2 size={14} />
+          <HugeiconsIcon icon={Settings02Icon} size={14} />
           Company setup
         </button>
       </div>
@@ -667,7 +668,7 @@ function OpportunityList({
                 <span
                   className={`grid h-10 w-10 shrink-0 place-items-center rounded-[13px] ${i === 0 ? "bg-[#fff0e8] text-[#e45e20]" : "bg-black/[.045] text-[#666661]"}`}
                 >
-                  <RouteIcon size={17} />
+                  <HugeiconsIcon icon={Route01Icon} size={17} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
@@ -715,9 +716,13 @@ function OpportunityList({
                     className="mt-5 h-9 px-3.5 text-[11px]"
                   >
                     {creating === o.id ? (
-                      <Loader2 className="animate-spin" size={13} />
+                      <HugeiconsIcon
+                        icon={Loading01Icon}
+                        className="animate-spin"
+                        size={13}
+                      />
                     ) : (
-                      <Plus size={13} />
+                      <HugeiconsIcon icon={Add01Icon} size={13} />
                     )}{" "}
                     Create route
                   </Button>
@@ -733,11 +738,11 @@ function OpportunityList({
 
 function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
   const Icon = {
-    system: Boxes,
-    ai: Bot,
-    knowledge: Database,
-    logic: GitBranch,
-    human: UserCheck,
+    system: BoxesIcon,
+    ai: BotIcon,
+    knowledge: Database01Icon,
+    logic: GitBranchIcon,
+    human: UserCheck01Icon,
   }[data.kind];
   const tones = {
     system: "bg-[#ececea]",
@@ -755,7 +760,7 @@ function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
         <span
           className={`grid h-8 w-8 place-items-center rounded-[10px] ${tones[data.kind]}`}
         >
-          <Icon size={14} />
+          <HugeiconsIcon icon={Icon} size={14} />
         </span>
         <span>
           <span className="block text-[11px] font-semibold">{data.label}</span>
@@ -764,10 +769,18 @@ function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
           </span>
         </span>
         {data.status === "done" && (
-          <CheckCircle2 size={15} className="ml-auto text-[#57a26b]" />
+          <HugeiconsIcon
+            icon={CheckmarkCircle02Icon}
+            size={15}
+            className="ml-auto text-[#57a26b]"
+          />
         )}
         {data.status === "running" && (
-          <Loader2 size={14} className="ml-auto animate-spin text-[#e45e20]" />
+          <HugeiconsIcon
+            icon={Loading01Icon}
+            size={14}
+            className="ml-auto animate-spin text-[#e45e20]"
+          />
         )}
       </div>
       <Handle type="source" position={Position.Bottom} />
@@ -923,7 +936,7 @@ function Routes({
               >
                 <div className="flex items-start justify-between">
                   <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#fff0e8] text-[#d8551d]">
-                    <RouteIcon size={18} />
+                    <HugeiconsIcon icon={Route01Icon} size={18} />
                   </span>
                   <span className="flex items-center gap-1.5 rounded-full bg-[#edf6ef] px-2.5 py-1 text-[9px] font-semibold text-[#3f7b50]">
                     <span className="h-1.5 w-1.5 rounded-full bg-[#59a76d]" />
@@ -944,11 +957,11 @@ function Routes({
                       title={system}
                     >
                       {system === "Gmail" ? (
-                        <Mail />
+                        <HugeiconsIcon icon={Mail01Icon} />
                       ) : system === "Salesforce" ? (
-                        <Database />
+                        <HugeiconsIcon icon={Database01Icon} />
                       ) : (
-                        <Boxes />
+                        <HugeiconsIcon icon={BoxesIcon} />
                       )}
                     </span>
                   ))}
@@ -981,7 +994,7 @@ function Routes({
                   </div>
                 </div>
                 <span className="mt-5 flex items-center justify-end gap-1 text-[10px] font-semibold text-[#686863] opacity-0 transition group-hover:opacity-100">
-                  Open route <ChevronRight size={12} />
+                  Open route <HugeiconsIcon icon={ChevronRightIcon} size={12} />
                 </span>
               </motion.button>
             ))}
@@ -996,7 +1009,7 @@ function Routes({
         <div className="grid h-[calc(100vh-82px)] place-items-center">
           <div className="max-w-md text-center">
             <span className="mx-auto grid h-14 w-14 place-items-center rounded-[18px] bg-white shadow-sm">
-              <RouteIcon size={22} />
+              <HugeiconsIcon icon={Route01Icon} size={22} />
             </span>
             <h2 className="mt-6 text-[25px] font-semibold tracking-[-.04em]">
               Create your first route
@@ -1024,11 +1037,17 @@ function Routes({
           >
             {step > 0 && step < 8 ? (
               <>
-                <Loader2 size={14} className="animate-spin" /> Running
+                <HugeiconsIcon
+                  icon={Loading01Icon}
+                  size={14}
+                  className="animate-spin"
+                />{" "}
+                Running
               </>
             ) : (
               <>
-                <Play size={13} fill="currentColor" /> Run route
+                <HugeiconsIcon icon={PlayIcon} size={13} fill="currentColor" />{" "}
+                Run route
               </>
             )}
           </Button>
@@ -1063,7 +1082,7 @@ function Routes({
                 onClick={() => setInspected(null)}
                 className="absolute right-5 top-5"
               >
-                <X size={15} />
+                <HugeiconsIcon icon={Cancel01Icon} size={15} />
               </button>
               <span className="text-[10px] font-semibold uppercase tracking-[.12em] text-[#999994]">
                 {inspected.data.kind}
@@ -1084,7 +1103,7 @@ function Routes({
               {Number(inspected.id) < step && (
                 <div className="mt-3 rounded-[16px] bg-[#edf6ef] p-4">
                   <div className="flex items-center gap-2 text-[10px] font-semibold text-[#347248]">
-                    <Check size={13} /> Completed
+                    <HugeiconsIcon icon={CheckIcon} size={13} /> Completed
                   </div>
                   <p className="mt-2 text-[10px] leading-5 text-[#55725e]">
                     Output is available and was passed to the next step.
@@ -1156,7 +1175,12 @@ function ReviewSheet({ continueRoute }: { continueRoute: () => void }) {
                 className={`mr-3 grid h-4 w-4 place-items-center rounded-full ${choice === i ? "bg-[#ff7a35]" : "bg-black/10"}`}
               >
                 {choice === i && (
-                  <Circle size={6} fill="white" className="text-white" />
+                  <HugeiconsIcon
+                    icon={CircleIcon}
+                    size={6}
+                    fill="white"
+                    className="text-white"
+                  />
                 )}
               </span>
               <span className="font-mono text-[11px] font-semibold">
@@ -1169,7 +1193,7 @@ function ReviewSheet({ continueRoute }: { continueRoute: () => void }) {
           ))}
         </div>
         <Button onClick={continueRoute} className="mt-5 w-full">
-          Continue route <ArrowRight size={13} />
+          Continue route <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
         </Button>
       </motion.div>
     </div>
@@ -1228,7 +1252,7 @@ function Sources({
                   key={f.name}
                   className="flex items-center gap-3 rounded-[16px] bg-white px-4 py-3"
                 >
-                  <FileText size={15} />
+                  <HugeiconsIcon icon={File01Icon} size={15} />
                   <span className="text-[11px] font-medium">{f.name}</span>
                   <span className="ml-auto text-[9px] text-[#999994]">
                     {Math.max(1, Math.round(f.size / 1024))} KB · Ready
