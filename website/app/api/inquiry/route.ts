@@ -4,7 +4,16 @@ const INQUIRY_TO = process.env.INQUIRY_TO_EMAIL ?? "jan.jime.serra@gmail.com";
 
 export async function POST(request: Request) {
   const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM ?? "Heighliner <onboarding@resend.dev>";
+
+  console.info("[inquiry] configuration", {
+    hasResendApiKey: Boolean(apiKey),
+    hasRecipient: Boolean(process.env.INQUIRY_TO_EMAIL),
+    from,
+  });
+
   if (!apiKey) {
+    console.warn("[inquiry] RESEND_API_KEY is unavailable to this server process");
     return NextResponse.json({ error: "Email not configured" }, { status: 503 });
   }
 
@@ -29,8 +38,6 @@ export async function POST(request: Request) {
       : "Where work gets stuck: Not provided",
   ].join("\n");
 
-  const from = process.env.RESEND_FROM ?? "Heighliner <onboarding@resend.dev>";
-
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -47,8 +54,15 @@ export async function POST(request: Request) {
   });
 
   if (!res.ok) {
+    const detail = await res.text();
+    console.error("[inquiry] Resend rejected the email", {
+      status: res.status,
+      detail: detail.slice(0, 500),
+    });
     return NextResponse.json({ error: "Failed to send" }, { status: 502 });
   }
+
+  console.info("[inquiry] email accepted by Resend");
 
   return NextResponse.json({ ok: true });
 }

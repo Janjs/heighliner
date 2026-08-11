@@ -82,62 +82,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid route edit" }, { status: 400 });
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "OPENAI_API_KEY is not configured" },
-      { status: 503 },
-    );
-  }
-
-  try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5-mini",
-        input: [
-          {
-            role: "system",
-            content:
-              "You edit automation routes. Apply only the requested change, preserve everything else, and keep steps concise. Return the complete updated route. A system step reads or writes an external system; knowledge retrieves context; ai transforms content; logic makes a decision; human requests a person. Reply briefly in the user's language.",
-          },
-          {
-            role: "user",
-            content: `Current route: ${JSON.stringify(body.route)}\nRequested edit: ${message}\nLocale: ${body.locale === "es" ? "Spanish" : "English"}`,
-          },
-        ],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "route_edit",
-            strict: true,
-            schema,
-          },
-        },
-      }),
-    });
-    if (!response.ok) throw new Error("OpenAI request failed");
-    const data = await response.json();
-    const text = data.output
-      ?.flatMap((item: { content?: unknown[] }) => item.content || [])
-      .find((item: { type?: string }) => item.type === "output_text")?.text;
-    const result = JSON.parse(text);
-    const route = {
-      ...body.route,
-      ...result.route,
-      id: body.route.id,
-      createdAt: body.route.createdAt,
-    };
-    if (!validRoute(route)) throw new Error("Invalid model output");
-    return NextResponse.json({ reply: result.reply, route });
-  } catch {
-    return NextResponse.json(
-      { error: "Unable to edit route" },
-      { status: 502 },
-    );
-  }
+  const route = {
+    ...body.route,
+    description: `${body.route.description} (Demo update: ${message})`,
+  };
+  return NextResponse.json({
+    reply: body.locale === "es" ? "Actualización de demostración aplicada." : "Demo update applied.",
+    route,
+  });
 }

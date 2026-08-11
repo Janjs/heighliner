@@ -1,0 +1,185 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-height: 100%;
+}
+body {
+  margin: 0;
+  background: #f7f7f5;
+  color: #20201f;
+  font-family:
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Text",
+    "Segoe UI",
+    sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+body[data-font="inter"] {
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+body[data-font="space"] {
+  font-family:
+    "Space Grotesk",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+body[data-font="sora"] {
+  font-family:
+    "Sora",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+body[data-font="outfit"] {
+  font-family:
+    "Outfit",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+::selection {
+  background: #ffd6c1;
+}
+.pressable:active {
+  transform: scale(0.975);
+  transition: transform 90ms ease-out;
+}
+.react-flow__attribution {
+  display: none;
+}
+.react-flow__controls {
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+}
+.react-flow__controls-button {
+  border: 0 !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+.react-flow__handle {
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0;
+}
+.react-flow__edge-path {
+  stroke-dasharray: 5 5;
+  animation: route 16s linear infinite;
+}
+@keyframes route {
+  to {
+    stroke-dashoffset: -260;
+  }
+}
+.landing-journey-visual {
+  animation: landing-visual-in 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.landing-result-card {
+  animation: landing-result-in 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+.landing-source-pulse {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 5px;
+  width: 5px;
+  border-radius: 999px;
+  background: #ff8a4d;
+  box-shadow: 0 0 0 3px rgba(255, 138, 77, 0.12);
+}
+.landing-source-pulse {
+  animation: landing-source-flow 1.8s linear infinite;
+}
+@keyframes landing-visual-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes landing-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes landing-source-flow {
+  from {
+    opacity: 0;
+    transform: translate(0, -50%);
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(52px, -50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-route-branch circle,
+  .landing-route-traveler circle {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  aside,
+  header {
+    background: #f7f7f5 !important;
+    backdrop-filter: none !important;
+  }
+}
+@media (max-width: 820px) {
+  aside.fixed {
+    width: 210px;
+  }
+  main.ml-\[250px\] {
+    margin-left: 210px;
+  }
+}

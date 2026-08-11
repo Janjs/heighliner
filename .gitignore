@@ -1,6 +1,8 @@
 .DS_Store
 node_modules
 .next
+data/
+.next
 dist
 build
 .env
