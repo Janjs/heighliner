@@ -2,6 +2,14 @@
 
 Heighliner is an AI automation app for companies or personal use.
 
+## How it works
+
+1. **Add your sources.** Attach files such as PDFs, images, text files, and CSVs, or connect tools such as Gmail. Sources give Heighliner context about your company and how work gets done.
+2. **Discover opportunities.** Heighliner analyzes your sources and generates practical ideas for work that could be improved or automated.
+3. **Create routes.** Turn the opportunities you want to pursue into automated workflows. A route can connect your tools, use company knowledge, apply AI, update other systems, and send uncertain results to a person for review.
+
+![A Heighliner route automating incoming orders from Gmail to Salesforce](public/heighliner-route.png)
+
 ## How to use it
 
 1. Install dependencies:
@@ -31,10 +39,13 @@ npm run dev
 
 Your data is stored locally in `data/heighliner.db`, and it is created automatically the first time you run the app.
 
+## See it in action
+
+Try the demo at [heighliner.janjs.dev](https://heighliner.janjs.dev/)
+
 ## Run in production
 
 ```bash
 npm run build
 npm run start
 ```
-

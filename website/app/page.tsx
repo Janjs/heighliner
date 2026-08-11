@@ -22,6 +22,7 @@ import {
   CircleIcon,
   Database01Icon,
   File01Icon,
+  Folder01Icon,
   GitBranchIcon,
   Loading01Icon,
   Mail01Icon,
@@ -204,6 +205,7 @@ type FlowData = {
   label: string;
   detail: string;
   kind: "system" | "ai" | "knowledge" | "logic" | "human";
+  integration?: string;
   status?: "idle" | "running" | "done";
 };
 
@@ -2791,10 +2793,11 @@ function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
   const Icon = {
     system: BoxesIcon,
     ai: BotIcon,
-    knowledge: Database01Icon,
+    knowledge: Folder01Icon,
     logic: GitBranchIcon,
     human: UserCheck01Icon,
   }[data.kind];
+  const logo = data.integration && integrationLogos[data.integration];
   const tones = {
     system: "bg-[#ececea]",
     ai: "bg-[#fff0e8] text-[#cb501d]",
@@ -2811,7 +2814,11 @@ function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
         <span
           className={`grid h-8 w-8 place-items-center rounded-[10px] ${tones[data.kind]}`}
         >
-          <HugeiconsIcon icon={Icon} size={14} />
+          {logo ? (
+            <img src={logo} alt="" className="h-4 w-4 object-contain" />
+          ) : (
+            <HugeiconsIcon icon={Icon} size={14} />
+          )}
         </span>
         <span>
           <span className="block text-[11px] font-semibold">{data.label}</span>
@@ -2849,8 +2856,12 @@ function makeFlow(
   const flowCopy = translations[lang].flow;
   const system = route.systems[0] || "Gmail";
   const destination = route.systems.at(-1) || "Business system";
-  const defaultSteps = [
-    [system, flowCopy.newItem, "system"],
+  const findIntegration = (label: string, detail: string) =>
+    Object.keys(integrationLogos).find((name) =>
+      `${label} ${detail}`.includes(name),
+    );
+  const defaultSteps: [string, string, FlowData["kind"], string?][] = [
+    [system, flowCopy.newItem, "system", system],
     [flowCopy.collectContext, flowCopy.readSourceData, "knowledge"],
     [
       route.title.replace(flowCopy.routePrefixes, ""),
@@ -2863,18 +2874,36 @@ function makeFlow(
       flowCopy.updateDestination(destination),
       flowCopy.completeAction,
       "system",
+      destination,
     ],
-    [flowCopy.routeComplete, flowCopy.destinationReached, "system"],
-  ] as const;
+    [
+      flowCopy.routeComplete,
+      flowCopy.destinationReached,
+      "system",
+      destination,
+    ],
+  ];
   const labels = route.steps?.length
-    ? route.steps.map((step) => [step.label, step.detail, step.kind] as const)
+    ? route.steps.map(
+        (step): [string, string, FlowData["kind"], string?] => [
+          step.label,
+          step.detail,
+          step.kind,
+          findIntegration(step.label, step.detail),
+        ],
+      )
     : defaultSteps;
   if (route.steps?.length) {
     const nodes: Node<FlowData>[] = labels.map((item, index) => ({
       id: String(index + 1),
       type: "flow",
       position: { x: 270, y: 20 + index * 125 },
-      data: { label: item[0], detail: item[1], kind: item[2] },
+      data: {
+        label: item[0],
+        detail: item[1],
+        kind: item[2],
+        integration: item[3],
+      },
     }));
     return {
       nodes,
@@ -2907,7 +2936,7 @@ function makeFlow(
     id: String(i + 1),
     type: "flow",
     position: { x: positions[i][0], y: positions[i][1] },
-    data: { label: l[0], detail: l[1], kind: l[2] },
+    data: { label: l[0], detail: l[1], kind: l[2], integration: l[3] },
   }));
   const mk = (
     id: string,
@@ -3122,15 +3151,17 @@ function Routes({
                   {route.systems.map((system, systemIndex) => (
                     <span
                       key={system}
-                      className={`grid h-8 w-8 place-items-center rounded-full bg-[#f0f0ed] text-[#666661] ring-2 ring-white [&_svg]:h-3.5 [&_svg]:w-3.5 ${systemIndex ? "-ml-1.5" : ""}`}
+                      className={`grid h-8 w-8 place-items-center rounded-full bg-[#f0f0ed] text-[#666661] ring-2 ring-white ${systemIndex ? "-ml-1.5" : ""}`}
                       title={system}
                     >
-                      {system === "Gmail" ? (
-                        <HugeiconsIcon icon={Mail01Icon} />
-                      ) : system === "Salesforce" ? (
-                        <HugeiconsIcon icon={Database01Icon} />
+                      {integrationLogos[system] ? (
+                        <img
+                          src={integrationLogos[system]}
+                          alt=""
+                          className="h-4 w-4 object-contain"
+                        />
                       ) : (
-                        <HugeiconsIcon icon={BoxesIcon} />
+                        <HugeiconsIcon icon={Folder01Icon} size={14} />
                       )}
                     </span>
                   ))}
