@@ -69,6 +69,19 @@ const accountCtaByLang: Record<Lang, { prompt: string; action: string }> = {
   },
 };
 
+function GitHubMark({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+    >
+      <path d="M12 .297a12 12 0 0 0-3.79 23.408c.6.11.82-.26.82-.577v-2.17c-3.34.726-4.04-1.416-4.04-1.416-.546-1.385-1.33-1.755-1.33-1.755-1.09-.746.082-.73.082-.73 1.2.085 1.83 1.233 1.83 1.233 1.07 1.83 2.81 1.3 3.49.99.11-.775.42-1.3.76-1.6-2.66-.303-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.303-.54-1.52.12-3.16 0 0 1.01-.324 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.56 3.3-1.23 3.3-1.23.66 1.64.24 2.86.12 3.16.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.81 1.11.81 2.23v3.31c0 .32.22.7.83.58A12 12 0 0 0 12 .297Z" />
+    </svg>
+  );
+}
+
 function resolveLang(value: string | null, browserLang: string): Lang {
   if (value === "en" || value === "es" || value === "nl") return value;
   if (browserLang.startsWith("es")) return "es";
@@ -1168,6 +1181,7 @@ type LandingCopy = {
   body: string;
   contactButton: string;
   demo: string;
+  deploy: string;
   previewTag: string;
   previewTitle: string;
   opportunity: string;
@@ -1219,6 +1233,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     body: "You don’t need to know what to automate. Tell Heighliner how your company works and it will find the opportunities for you.",
     contactButton: "Tell us about your company",
     demo: "View an example",
+    deploy: "Deploy it yourself",
     previewTag: "your company workspace",
     previewTitle: "6 valuable routes found",
     opportunity: "Automate incoming orders",
@@ -1265,7 +1280,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     exampleTitle: "See how it worked for a small souvenir company in Spain.",
     exampleBody:
       "Explore a real workspace, the opportunities Heighliner found, and the routes it built.",
-    exampleButton: "View the Amazonik example",
+    exampleButton: "View an example",
     note: "AI automation discovery, design, and implementation.",
     preview: {
       navRoutes: "Routes",
@@ -1293,6 +1308,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     body: "No tienes que saber qué automatizar. Cuéntale a Heighliner cómo funciona tu empresa y encontrará las oportunidades por ti.",
     contactButton: "Cuéntanos sobre tu empresa",
     demo: "Ver un ejemplo",
+    deploy: "Despliega el tuyo",
     previewTag: "Espacio de trabajo de tu empresa",
     previewTitle: "6 rutas valiosas encontradas",
     opportunity: "Automatizar pedidos entrantes",
@@ -1340,7 +1356,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
       "Mira cómo funcionó para una pequeña empresa de souvenirs en España.",
     exampleBody:
       "Explora un espacio de trabajo real, las oportunidades que encontró Heighliner y las rutas que construyó.",
-    exampleButton: "Ver el ejemplo de Amazonik",
+    exampleButton: "Ver un ejemplo",
     note: "Descubrimiento, diseño e implementación de automatizaciones con IA.",
     preview: {
       navRoutes: "Rutas",
@@ -1364,6 +1380,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     body: "Je hoeft niet te weten wat je moet automatiseren. Vertel Heighliner hoe je bedrijf werkt en het vindt de kansen voor je.",
     contactButton: "Vertel ons over je bedrijf",
     demo: "Bekijk een voorbeeld",
+    deploy: "Zet het zelf live",
     previewTag: "Werkruimte van je bedrijf",
     previewTitle: "6 waardevolle routes gevonden",
     opportunity: "Inkomende orders automatiseren",
@@ -1411,7 +1428,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
       "Bekijk hoe het werkte voor een klein souvenirbedrijf in Spanje.",
     exampleBody:
       "Verken een echte werkruimte, de kansen die Heighliner vond en de routes die het bouwde.",
-    exampleButton: "Bekijk het Amazonik-voorbeeld",
+    exampleButton: "Bekijk een voorbeeld",
     note: "Ontdekking, ontwerp en implementatie van AI-automatisering.",
     preview: {
       navRoutes: "Routes",
@@ -1542,6 +1559,7 @@ function Landing({ explore }: { explore: () => void }) {
     "idle" | "submitting" | "success" | "error"
   >("idle");
   const copy = landingCopy[lang];
+  const repoUrl = "https://github.com/Janjs/heighliner";
   const clearInquiryError = () => {
     if (inquiryState === "error") setInquiryState("idle");
   };
@@ -1570,7 +1588,6 @@ function Landing({ explore }: { explore: () => void }) {
       setInquiryState("error");
     }
   };
-
   return (
     <div className="min-h-screen overflow-hidden bg-[#f7f7f5] px-5 text-[#20201f] sm:px-7 lg:px-10">
       <header className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between">
@@ -1606,12 +1623,15 @@ function Landing({ explore }: { explore: () => void }) {
                 {copy.contactButton}
                 <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
               </a>
-              <button
-                onClick={explore}
+              <a
+                href={repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="pressable inline-flex items-center gap-2 rounded-full bg-black/[.055] px-5 py-3 text-[13px] font-medium hover:bg-black/[.09]"
               >
-                {copy.demo}
-              </button>
+                <GitHubMark className="h-4 w-4" />
+                {copy.deploy}
+              </a>
             </div>
           </div>
 
@@ -2247,13 +2267,27 @@ function Landing({ explore }: { explore: () => void }) {
                   alt="Amazonik"
                   className="h-24 w-24 shrink-0 object-contain sm:h-28 sm:w-28"
                 />
-                <button
-                  onClick={explore}
-                  className="pressable inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[13px] font-medium text-[#20201f]"
-                >
-                  {copy.exampleButton}
-                  <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
-                </button>
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                  <button
+                    type="button"
+                    onClick={explore}
+                    className="pressable inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[13px] font-medium text-[#20201f]"
+                  >
+                    {copy.exampleButton}
+                    <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+                  </button>
+                  <span className="text-[12px] text-white/45">or</span>
+                  <a
+                    href={repoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pressable inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-5 py-3 text-[13px] font-medium text-white"
+                  >
+                    <GitHubMark className="h-4 w-4" />
+                    {copy.deploy}
+                    <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+                  </a>
+                </div>
               </div>
             </div>
           </div>
