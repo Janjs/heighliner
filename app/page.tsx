@@ -22,9 +22,7 @@ import {
   CircleIcon,
   Database01Icon,
   File01Icon,
-  FolderOpenIcon,
   GitBranchIcon,
-  InboxIcon,
   Loading01Icon,
   Mail01Icon,
   PlayIcon,
@@ -54,6 +52,21 @@ const languageLabels: Record<Lang, string> = {
   en: "English",
   es: "Español",
   nl: "Nederlands",
+};
+
+const accountCtaByLang: Record<Lang, { prompt: string; action: string }> = {
+  en: {
+    prompt: "Would you like us to do this for your company?",
+    action: "Reach out",
+  },
+  es: {
+    prompt: "¿Quieres que hagamos esto para tu empresa?",
+    action: "Hablemos",
+  },
+  nl: {
+    prompt: "Wil je dat we dit voor jouw bedrijf doen?",
+    action: "Neem contact op",
+  },
 };
 
 function resolveLang(value: string | null, browserLang: string): Lang {
@@ -194,8 +207,16 @@ const integrationNames = [
   "Microsoft 365",
   "Salesforce",
   "Notion",
-  "HubSpot",
 ];
+
+const integrationLogos: Record<string, string> = {
+  Gmail: "/integrations/gmail.svg",
+  "Google Drive": "/integrations/google-drive.svg",
+  Slack: "/integrations/slack.svg",
+  "Microsoft 365": "/integrations/microsoft-365.svg",
+  Salesforce: "/integrations/salesforce.svg",
+  Notion: "/integrations/notion.svg",
+};
 const leadDefaults: LeadForm = {
   name: "",
   description: "",
@@ -1114,10 +1135,11 @@ function useLocale() {
 function Logo({ onClick }: { onClick?: () => void }) {
   const mark = (
     <>
-      <div className="relative h-6 w-6 rounded-full bg-[#191918]">
-        <div className="absolute left-[5px] top-[11px] h-px w-3 -rotate-[28deg] bg-[#ff7a35]" />
-        <div className="absolute right-[5px] top-[5px] h-1.5 w-1.5 rounded-full bg-white" />
-      </div>
+      <img
+        src="/heighliner-logo.svg"
+        alt=""
+        className="h-[18px] w-auto shrink-0"
+      />
       <span className="text-[17px] font-semibold tracking-[-.035em]">
         Heighliner
       </span>
@@ -1129,14 +1151,14 @@ function Logo({ onClick }: { onClick?: () => void }) {
       <button
         type="button"
         onClick={onClick}
-        className="pressable flex items-center gap-2.5"
+        className="pressable flex items-center gap-1.5"
       >
         {mark}
       </button>
     );
   }
 
-  return <div className="flex items-center gap-2.5">{mark}</div>;
+  return <div className="flex items-center gap-1.5">{mark}</div>;
 }
 
 type LandingCopy = {
@@ -1193,7 +1215,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
   en: {
     navContact: "Contact",
     eyebrow: "Practical AI for operations",
-    title: "Turn repetitive work into intelligent routes.",
+    title: "Find and automate your company’s repetitive work.",
     body: "You don’t need to know what to automate. Tell Heighliner how your company works and it will find the opportunities for you.",
     contactButton: "Tell us about your company",
     demo: "View an example",
@@ -1249,7 +1271,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
       navRoutes: "Routes",
       navOpportunities: "Opportunities",
       navSources: "Sources",
-      headerTitle: "Opportunities",
+      headerTitle: "Routes",
       analysisComplete: "Analysis complete",
       discoveryComplete: "Discovery complete",
       recommended: "Recommended",
@@ -1267,7 +1289,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
   es: {
     navContact: "Contacto",
     eyebrow: "IA práctica para operaciones",
-    title: "Convierte el trabajo repetitivo en rutas inteligentes.",
+    title: "Encontramos y automatizamos el trabajo repetitivo de tu empresa.",
     body: "No tienes que saber qué automatizar. Cuéntale a Heighliner cómo funciona tu empresa y encontrará las oportunidades por ti.",
     contactButton: "Cuéntanos sobre tu empresa",
     demo: "Ver un ejemplo",
@@ -1324,7 +1346,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
       navRoutes: "Rutas",
       navOpportunities: "Oportunidades",
       navSources: "Fuentes",
-      headerTitle: "Oportunidades",
+      headerTitle: "Rutas",
       analysisComplete: "Análisis completo",
       discoveryComplete: "Descubrimiento completo",
       recommended: "Recomendada",
@@ -1338,7 +1360,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
   nl: {
     navContact: "Contact",
     eyebrow: "Praktische AI voor operations",
-    title: "Maak repetitief werk slimme routes.",
+    title: "We vinden en automatiseren het repetitieve werk van je bedrijf.",
     body: "Je hoeft niet te weten wat je moet automatiseren. Vertel Heighliner hoe je bedrijf werkt en het vindt de kansen voor je.",
     contactButton: "Vertel ons over je bedrijf",
     demo: "Bekijk een voorbeeld",
@@ -1395,7 +1417,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
       navRoutes: "Routes",
       navOpportunities: "Kansen",
       navSources: "Bronnen",
-      headerTitle: "Kansen",
+      headerTitle: "Routes",
       analysisComplete: "Analyse voltooid",
       discoveryComplete: "Ontdekking voltooid",
       recommended: "Aanbevolen",
@@ -1416,18 +1438,34 @@ function WorkspaceAccount({
   compact,
   name = "your company",
   subtitle,
-  subtitleHref,
   logoSrc,
   logoAlt = "",
+  onContact,
 }: {
   compact?: boolean;
   name?: string;
   subtitle?: string;
-  subtitleHref?: string;
   logoSrc?: string;
   logoAlt?: string;
+  onContact?: () => void;
 }) {
-  return (
+  const { lang } = useLocale();
+  const details = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (!onContact) return;
+    const close = (event: PointerEvent) => {
+      if (
+        !details.current?.contains(
+          event.target instanceof Element ? event.target : null,
+        )
+      ) {
+        details.current?.removeAttribute("open");
+      }
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [onContact]);
+  const account = (
     <div
       className={`flex items-center gap-3 ${compact ? "px-0 py-0" : "px-3 py-2.5"}`}
     >
@@ -1451,25 +1489,47 @@ function WorkspaceAccount({
           {name}
         </div>
         {subtitle ? (
-          subtitleHref ? (
-            <a
-              href={subtitleHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`block truncate text-[#999994] hover:text-[#555550] ${compact ? "text-[9px]" : "text-[10px]"}`}
-            >
-              {subtitle}
-            </a>
-          ) : (
-            <div
-              className={`truncate text-[#999994] ${compact ? "text-[9px]" : "text-[10px]"}`}
-            >
-              {subtitle}
-            </div>
-          )
+          <div
+            className={`truncate text-[#999994] ${compact ? "text-[9px]" : "text-[10px]"}`}
+          >
+            {subtitle}
+          </div>
         ) : null}
       </div>
+      {onContact ? (
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          size={12}
+          className="ml-auto rotate-[-90deg] text-[#999994] transition group-open:rotate-90"
+        />
+      ) : null}
     </div>
+  );
+
+  if (!onContact) return account;
+
+  return (
+    <details ref={details} className="group relative">
+      <summary className="pressable cursor-pointer list-none rounded-[13px] hover:bg-black/[.04] [&::-webkit-details-marker]:hidden">
+        {account}
+      </summary>
+      <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-full rounded-[16px] border border-black/[.06] bg-white p-3 shadow-[0_12px_35px_rgba(0,0,0,.12)]">
+        <p className="px-1 pb-3 text-[12px] font-medium leading-5 text-[#555550]">
+          {accountCtaByLang[lang].prompt}
+        </p>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.currentTarget.closest("details")?.removeAttribute("open");
+            onContact();
+          }}
+          className="pressable flex w-full items-center justify-between rounded-[11px] bg-[#20201f] px-3 py-2.5 text-left text-[11px] font-medium text-white hover:bg-black"
+        >
+          {accountCtaByLang[lang].action}
+          <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
+        </button>
+      </div>
+    </details>
   );
 }
 
@@ -1513,163 +1573,203 @@ function Landing({ explore }: { explore: () => void }) {
 
   return (
     <div className="min-h-screen overflow-hidden bg-[#f7f7f5] px-5 text-[#20201f] sm:px-7 lg:px-10">
-      <header className="mx-auto flex h-20 w-full max-w-[1180px] items-center justify-between">
+      <header className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between">
         <Logo />
         <div className="flex items-center gap-5">
-          <LanguageSwitcher />
           <a
             href="#contact"
             className="pressable text-[12px] font-medium text-[#696964] hover:text-black"
           >
             {copy.navContact}
           </a>
+          <LanguageSwitcher />
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1180px] pb-24 sm:pb-32">
-        <section className="pb-16 pt-24 text-center sm:pb-24 sm:pt-32">
-          <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#df6027]">
-            {copy.eyebrow}
-          </p>
-          <h1 className="mx-auto mt-6 max-w-[920px] text-[clamp(3.3rem,8vw,7.4rem)] font-semibold leading-[.9] tracking-[-.075em]">
-            {copy.title}
-          </h1>
-          <p className="mx-auto mt-7 max-w-[590px] text-[15px] leading-7 text-[#6f6f6a] sm:text-[17px]">
-            {copy.body}
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="#contact"
-              className="pressable inline-flex items-center gap-2 rounded-full bg-[#20201f] px-5 py-3 text-[13px] font-medium text-white hover:bg-black"
-            >
-              {copy.contactButton}
-              <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
-            </a>
-            <button
-              onClick={explore}
-              className="pressable inline-flex items-center gap-2 rounded-full bg-black/[.055] px-5 py-3 text-[13px] font-medium hover:bg-black/[.09]"
-            >
-              {copy.demo}
-            </button>
+      <main className="mx-auto w-full max-w-[1280px] pb-24 sm:pb-32">
+        <section className="grid items-center gap-14 pb-24 pt-16 sm:pb-32 sm:pt-24 lg:grid-cols-[.78fr_1.22fr] lg:gap-16 lg:pt-14">
+          <div className="text-center lg:text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#df6027]">
+              {copy.eyebrow}
+            </p>
+            <h1 className="mx-auto mt-6 max-w-[920px] text-[clamp(2.5rem,5vw,4.4rem)] font-semibold leading-[.9] tracking-[-.075em] lg:mx-0">
+              {copy.title}
+            </h1>
+            <p className="mx-auto mt-7 max-w-[590px] text-[15px] leading-7 text-[#6f6f6a] sm:text-[17px] lg:mx-0 lg:max-w-[460px]">
+              {copy.body}
+            </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
+              <a
+                href="#contact"
+                className="pressable inline-flex items-center gap-2 rounded-full bg-[#20201f] px-5 py-3 text-[13px] font-medium text-white hover:bg-black"
+              >
+                {copy.contactButton}
+                <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+              </a>
+              <button
+                onClick={explore}
+                className="pressable inline-flex items-center gap-2 rounded-full bg-black/[.055] px-5 py-3 text-[13px] font-medium hover:bg-black/[.09]"
+              >
+                {copy.demo}
+              </button>
+            </div>
           </div>
-        </section>
 
-        <section
-          aria-label="Heighliner dashboard preview"
-          className="relative mt-6 pb-24 sm:mt-10 sm:pb-32"
-        >
-          <div className="absolute inset-x-[12%] bottom-0 h-2/3 rounded-full bg-[#ff7a35]/15 blur-[100px]" />
-          <div className="relative rounded-[28px] border border-black/[.08] bg-[#e9e9e6] p-2 shadow-[0_35px_100px_rgba(27,27,25,.14)] sm:rounded-[36px] sm:p-3">
-            <div className="grid min-h-[540px] overflow-hidden rounded-[22px] bg-[#f7f7f5] sm:rounded-[28px] md:grid-cols-[190px_1fr]">
-              <aside className="hidden min-h-full flex-col border-r border-black/[.06] bg-white/70 p-5 md:flex">
-                <Logo />
-                <div className="mt-9 space-y-1 text-[11px]">
-                  {[
-                    [Route01Icon, copy.preview.navRoutes],
-                    [SparklesIcon, copy.preview.navOpportunities],
-                    [Database01Icon, copy.preview.navSources],
-                  ].map(([icon, label], index) => (
-                    <div
-                      key={String(label)}
-                      className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 ${index === 1 ? "bg-black/[.06] font-medium" : "text-[#777772]"}`}
-                    >
-                      <HugeiconsIcon
-                        icon={icon as typeof Route01Icon}
-                        size={14}
-                      />
-                      {String(label)}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-auto border-t border-black/[.06] pt-5">
-                  <WorkspaceAccount compact />
-                </div>
-              </aside>
-
-              <div className="min-w-0">
-                <div className="flex h-16 items-center justify-between border-b border-black/[.06] bg-white/50 px-5 sm:px-8">
-                  <div>
-                    <p className="text-[12px] font-semibold">
-                      {copy.preview.headerTitle}
-                    </p>
-                    <p className="mt-0.5 text-[9px] text-[#999994]">
-                      {copy.previewTag}
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-[#edf6ef] px-2.5 py-1 text-[9px] font-semibold text-[#3f7b50]">
-                    {copy.preview.analysisComplete}
-                  </span>
-                </div>
-                <div className="p-5 sm:p-8">
-                  <p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#df6027]">
-                    {copy.preview.discoveryComplete}
-                  </p>
-                  <h2 className="mt-3 text-[27px] font-semibold tracking-[-.05em] sm:text-[34px]">
-                    {copy.previewTitle}
-                  </h2>
-                  <div className="mt-7 grid gap-3 lg:grid-cols-[1.3fr_.7fr]">
-                    <div className="rounded-[20px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_12px_35px_rgba(0,0,0,.04)]">
-                      <div className="flex items-start justify-between gap-4">
-                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] bg-[#fff0e8] text-[#d8551d]">
-                          <HugeiconsIcon icon={Route01Icon} size={17} />
+          <div
+            aria-label="Heighliner dashboard preview"
+            className="group relative min-w-0 lg:w-[143%]"
+          >
+            <div className="absolute inset-x-[12%] bottom-0 h-2/3 rounded-full bg-[#ff7a35]/15 blur-[100px]" />
+            <div className="relative rounded-[28px] border border-black/[.08] bg-[#e9e9e6] p-2 shadow-[0_35px_100px_rgba(27,27,25,.14)] transition-[filter] duration-200 ease-[cubic-bezier(.23,1,.32,1)] group-hover:blur-[3px] group-focus-within:blur-[3px] sm:rounded-[36px] sm:p-3">
+              <div className="grid min-h-[520px] overflow-hidden rounded-[22px] bg-[#f7f7f5] sm:rounded-[28px] xl:grid-cols-[150px_1fr]">
+                <aside className="hidden min-h-full flex-col border-r border-black/[.06] bg-white/70 p-4 xl:flex">
+                  <Logo />
+                  <div className="mt-9 space-y-1 text-[11px]">
+                    <div>
+                      <div className="flex items-center gap-2.5 rounded-[10px] bg-black/[.06] px-3 py-2.5 font-medium">
+                        <HugeiconsIcon icon={Route01Icon} size={14} />
+                        <span className="min-w-0 flex-1 truncate">
+                          {copy.preview.navRoutes}
                         </span>
-                        <span className="rounded-full bg-[#fff0e8] px-2.5 py-1 text-[9px] font-semibold text-[#c65323]">
-                          {copy.preview.recommended}
-                        </span>
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          size={10}
+                          className="rotate-90 text-[#999994]"
+                        />
                       </div>
-                      <h3 className="mt-5 text-[17px] font-semibold tracking-[-.03em]">
-                        {copy.opportunity}
-                      </h3>
-                      <p className="mt-2 max-w-lg text-[11px] leading-5 text-[#777772]">
-                        {copy.opportunityBody}
-                      </p>
-                      <div className="mt-6 flex items-center justify-between border-t border-black/[.06] pt-4">
-                        <span className="flex items-center gap-2 text-[10px] text-[#777772]">
-                          Gmail <span className="text-[#bbb]">→</span>{" "}
-                          Salesforce
-                        </span>
-                        <span className="text-[10px] font-semibold">
-                          {copy.saved}
-                        </span>
+                      <div className="mt-1 space-y-1 pl-2">
+                        {[
+                          copy.opportunity,
+                          ...copy.preview.cards.slice(0, 2),
+                        ].map((route, index) => (
+                          <div
+                            key={route}
+                            className={`flex items-center gap-2 rounded-[9px] px-2 py-2 ${index === 0 ? "bg-white shadow-sm" : "text-[#777772]"}`}
+                          >
+                            <span className="h-1 w-1 shrink-0 rounded-full bg-[#c8c7c1]" />
+                            <span className="truncate text-[9px] font-medium">
+                              {route}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <div className="rounded-[20px] bg-[#20201f] p-5 text-white">
-                      <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-white/45">
-                        {copy.preview.impactEffort}
-                      </p>
-                      <div className="relative mt-5 h-[150px] rounded-[15px] border border-white/10">
-                        <span className="absolute left-[68%] top-[24%] h-3 w-3 rounded-full bg-[#ff7a35] ring-4 ring-[#ff7a35]/20" />
-                        <span className="absolute left-[35%] top-[52%] h-2.5 w-2.5 rounded-full bg-white/45" />
-                        <span className="absolute left-[76%] top-[64%] h-2 w-2 rounded-full bg-white/30" />
-                        <span className="absolute bottom-3 left-3 text-[8px] text-white/35">
-                          {copy.preview.lowerEffort}
-                        </span>
-                        <span className="absolute right-3 top-3 text-[8px] text-white/35">
-                          {copy.preview.higherImpact}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    {copy.preview.cards.map((title, index) => (
+                    {[
+                      [SparklesIcon, copy.preview.navOpportunities],
+                      [Database01Icon, copy.preview.navSources],
+                    ].map(([icon, label]) => (
                       <div
-                        key={title}
-                        className="rounded-[17px] border border-black/[.06] bg-white/60 p-4"
+                        key={String(label)}
+                        className="flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[#777772]"
                       >
-                        <p className="truncate text-[10px] font-medium">
-                          {title}
-                        </p>
-                        <p className="mt-3 text-[15px] font-semibold">
-                          {["5h", "4h", "3h"][index]}
-                        </p>
-                        <p className="text-[8px] text-[#999994]">
-                          {copy.preview.savedPerWeek}
-                        </p>
+                        <HugeiconsIcon
+                          icon={icon as typeof Route01Icon}
+                          size={14}
+                        />
+                        {String(label)}
                       </div>
                     ))}
                   </div>
+                  <div className="mt-auto border-t border-black/[.06] pt-5">
+                    <WorkspaceAccount compact />
+                  </div>
+                </aside>
+
+                <div className="min-w-0">
+                  <div className="flex h-16 items-center justify-between border-b border-black/[.06] bg-white/50 px-5 sm:px-8">
+                    <div>
+                      <p className="text-[12px] font-semibold">
+                        {copy.preview.headerTitle}
+                      </p>
+                      <p className="mt-0.5 text-[9px] text-[#999994]">
+                        {copy.previewTag}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[#edf6ef] px-2.5 py-1 text-[9px] font-semibold text-[#3f7b50]">
+                      {copy.preview.analysisComplete}
+                    </span>
+                  </div>
+                  <div className="p-5 sm:p-6">
+                    <p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#df6027]">
+                      {copy.preview.discoveryComplete}
+                    </p>
+                    <h2 className="mt-3 text-[27px] font-semibold tracking-[-.05em] sm:text-[34px]">
+                      {copy.previewTitle}
+                    </h2>
+                    <div className="mt-7 grid gap-3 lg:grid-cols-[1.3fr_.7fr]">
+                      <div className="rounded-[20px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_12px_35px_rgba(0,0,0,.04)]">
+                        <div className="flex items-start justify-between gap-4">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[13px] bg-[#fff0e8] text-[#d8551d]">
+                            <HugeiconsIcon icon={Route01Icon} size={17} />
+                          </span>
+                          <span className="rounded-full bg-[#fff0e8] px-2.5 py-1 text-[9px] font-semibold text-[#c65323]">
+                            {copy.preview.recommended}
+                          </span>
+                        </div>
+                        <h3 className="mt-5 text-[17px] font-semibold tracking-[-.03em]">
+                          {copy.opportunity}
+                        </h3>
+                        <p className="mt-2 max-w-lg text-[11px] leading-5 text-[#777772]">
+                          {copy.opportunityBody}
+                        </p>
+                        <div className="mt-6 flex items-center justify-between border-t border-black/[.06] pt-4">
+                          <span className="flex items-center gap-2 text-[10px] text-[#777772]">
+                            Gmail <span className="text-[#bbb]">→</span>{" "}
+                            Salesforce
+                          </span>
+                          <span className="text-[10px] font-semibold">
+                            {copy.saved}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="rounded-[20px] bg-[#20201f] p-5 text-white">
+                        <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-white/45">
+                          {copy.preview.impactEffort}
+                        </p>
+                        <div className="relative mt-5 h-[150px] rounded-[15px] border border-white/10">
+                          <span className="absolute left-[68%] top-[24%] h-3 w-3 rounded-full bg-[#ff7a35] ring-4 ring-[#ff7a35]/20" />
+                          <span className="absolute left-[35%] top-[52%] h-2.5 w-2.5 rounded-full bg-white/45" />
+                          <span className="absolute left-[76%] top-[64%] h-2 w-2 rounded-full bg-white/30" />
+                          <span className="absolute bottom-3 left-3 text-[8px] text-white/35">
+                            {copy.preview.lowerEffort}
+                          </span>
+                          <span className="absolute right-3 top-3 text-[8px] text-white/35">
+                            {copy.preview.higherImpact}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      {copy.preview.cards.map((title, index) => (
+                        <div
+                          key={title}
+                          className="rounded-[17px] border border-black/[.06] bg-white/60 p-4"
+                        >
+                          <p className="truncate text-[10px] font-medium">
+                            {title}
+                          </p>
+                          <p className="mt-3 text-[15px] font-semibold">
+                            {["5h", "4h", "3h"][index]}
+                          </p>
+                          <p className="text-[8px] text-[#999994]">
+                            {copy.preview.savedPerWeek}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center rounded-[28px] bg-white/10 opacity-0 transition-opacity duration-200 ease-[cubic-bezier(.23,1,.32,1)] group-hover:opacity-100 group-focus-within:opacity-100 sm:rounded-[36px]">
+              <button
+                type="button"
+                onClick={explore}
+                className="pressable pointer-events-auto inline-flex items-center gap-2 rounded-full bg-[#20201f] px-5 py-3 text-[13px] font-medium text-white shadow-[0_12px_35px_rgba(0,0,0,.22)] transition-transform duration-150 ease-out hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7a35] focus-visible:ring-offset-2"
+              >
+                {copy.demo}
+                <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+              </button>
             </div>
           </div>
         </section>
@@ -2060,7 +2160,7 @@ function Landing({ explore }: { explore: () => void }) {
                 select
                 selectOptions={translations[lang].onboarding.teamSizes}
               />
-                  <TextField
+              <TextField
                 wide
                 label={copy.fields.does}
                 value={lead.description}
@@ -2237,19 +2337,14 @@ function LanguageSwitcher() {
 }
 
 function SystemMark({ name }: { name: string }) {
-  const icon =
-    name === "Gmail"
-      ? Mail01Icon
-      : name === "Google Drive"
-        ? FolderOpenIcon
-        : name === "Slack"
-          ? InboxIcon
-          : name === "Salesforce"
-            ? Database01Icon
-            : BoxesIcon;
+  const logo = integrationLogos[name];
   return (
-    <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-black/[.055] text-[#555550] [&_svg]:h-4 [&_svg]:w-4">
-      <HugeiconsIcon icon={icon} />
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,.06)]">
+      {logo ? (
+        <img src={logo} alt="" className="h-5 w-5 object-contain" />
+      ) : (
+        <HugeiconsIcon icon={Mail01Icon} className="text-[#555550]" size={16} />
+      )}
     </span>
   );
 }
@@ -2308,6 +2403,7 @@ function Sidebar({
   opportunities,
   selectOpportunity,
   reset,
+  contact,
   isExample,
 }: {
   view: View;
@@ -2319,6 +2415,7 @@ function Sidebar({
   opportunities: Opportunity[];
   selectOpportunity: (id: string) => void;
   reset: () => void;
+  contact: () => void;
   isExample?: boolean;
 }) {
   const { copy } = useLocale();
@@ -2441,9 +2538,9 @@ function Sidebar({
           <WorkspaceAccount
             name="Amazonik S.L."
             subtitle="amazonik.es"
-            subtitleHref="https://amazonik.es"
             logoSrc={amazonikLogo}
             logoAlt="Amazonik logo"
+            onContact={contact}
           />
         </div>
       )}
@@ -3885,6 +3982,14 @@ export default function Home() {
     });
   };
   const reset = () => setInApp(false);
+  const contact = () => {
+    setInApp(false);
+    requestAnimationFrame(() =>
+      document
+        .getElementById("contact")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  };
   if (!ready) return null;
   return (
     <LocaleContext.Provider value={{ lang, setLang, copy: translations[lang] }}>
@@ -3916,6 +4021,7 @@ export default function Home() {
                 }, 50);
               }}
               reset={reset}
+              contact={contact}
               isExample={isExample}
             />
             <main className="ml-[250px] min-h-screen">

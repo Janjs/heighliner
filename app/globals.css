@@ -26,6 +26,38 @@ body {
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
 }
+body[data-font="inter"] {
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+body[data-font="space"] {
+  font-family:
+    "Space Grotesk",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+body[data-font="sora"] {
+  font-family:
+    "Sora",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+body[data-font="outfit"] {
+  font-family:
+    "Outfit",
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
 button,
 input,
 textarea,
