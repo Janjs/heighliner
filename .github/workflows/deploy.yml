@@ -2,13 +2,7 @@ name: Deploy to Coolify
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
-
-concurrency:
-  group: deploy-main
-  cancel-in-progress: true
+    branches: ["main"]
 
 jobs:
   deploy:
@@ -24,7 +18,5 @@ jobs:
             exit 1
           fi
 
-          curl -fsS -X POST "$COOLIFY_WEBHOOK" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN" \
-            -H "Content-Type: application/json" \
-            --data '{}'
+          curl --request GET "$COOLIFY_WEBHOOK" \
+            --header "Authorization: Bearer $COOLIFY_TOKEN"
