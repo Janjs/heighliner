@@ -15,17 +15,20 @@ import {
   ArrowRight01Icon,
   BotIcon,
   BoxesIcon,
+  Camera01Icon,
   Cancel01Icon,
   CheckIcon,
   CheckmarkCircle02Icon,
   ChevronRightIcon,
   CircleIcon,
   Database01Icon,
+  Delete02Icon,
   File01Icon,
   Folder01Icon,
   GitBranchIcon,
   Loading01Icon,
   Mail01Icon,
+  MoreVerticalIcon,
   PlayIcon,
   Route01Icon,
   SparklesIcon,
@@ -566,7 +569,15 @@ type Copy = {
   opportunities: {
     title: string;
     subtitle: string;
-    tag: string;
+    newOpportunity: string;
+    newOpportunityTitle: string;
+    titleLabel: string;
+    descriptionLabel: string;
+    cancel: string;
+    createOpportunity: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    addSource: string;
     heading: (count: number) => string;
     description: string;
     recommended: string;
@@ -587,6 +598,7 @@ type Copy = {
     subtitle: (count: number) => string;
     emptyTitle: string;
     emptyDescription: string;
+    viewOpportunities: string;
     overviewTitle: string;
     overviewDescription: string;
     active: string;
@@ -608,7 +620,6 @@ type Copy = {
     activeRoutes: (count: number) => string;
   };
   review: {
-    tag: string;
     title: string;
     description: string;
     continue: string;
@@ -688,8 +699,7 @@ const translations: Record<Lang, Copy> = {
       uploadTitle: "Choose files or drop them here",
       uploadHint: "PDF, Excel, CSV, Documents, Images",
       systems: "Systems",
-      localConnections:
-        "Demo connections are stored locally in this browser.",
+      localConnections: "Demo connections are stored locally in this browser.",
       back: "Back",
       continue: "Continue",
       findOpportunities: "Find opportunities",
@@ -708,7 +718,16 @@ const translations: Record<Lang, Copy> = {
     opportunities: {
       title: "Opportunities",
       subtitle: "Routes Heighliner found from your company context",
-      tag: "Discovery complete",
+      newOpportunity: "New opportunity",
+      newOpportunityTitle: "Create an opportunity",
+      titleLabel: "Title",
+      descriptionLabel: "Description",
+      cancel: "Cancel",
+      createOpportunity: "Create opportunity",
+      emptyTitle: "Add your first source",
+      emptyDescription:
+        "Share a file or connect a system so Heighliner can find opportunities for you.",
+      addSource: "Add a source",
       heading: (count) => `${count} valuable routes found.`,
       description:
         "Start with the highest-confidence route. You can inspect and change every step before running it.",
@@ -732,6 +751,7 @@ const translations: Record<Lang, Copy> = {
       emptyTitle: "Create your first route",
       emptyDescription:
         "Choose an opportunity and Heighliner will build the route from your connected systems.",
+      viewOpportunities: "View opportunities",
       overviewTitle: "Your routes",
       overviewDescription: "AI-powered processes running across Amazonik.",
       active: "Active",
@@ -754,7 +774,6 @@ const translations: Record<Lang, Copy> = {
         `${count} active ${count === 1 ? "route" : "routes"}`,
     },
     review: {
-      tag: "Human checkpoint",
       title: "Confirm the best match",
       description:
         "Heighliner found two possible results. Choose one to continue.",
@@ -866,7 +885,16 @@ const translations: Record<Lang, Copy> = {
       title: "Oportunidades",
       subtitle:
         "Rutas que Heighliner encontró a partir del contexto de tu empresa",
-      tag: "Descubrimiento completo",
+      newOpportunity: "Nueva oportunidad",
+      newOpportunityTitle: "Crear una oportunidad",
+      titleLabel: "Título",
+      descriptionLabel: "Descripción",
+      cancel: "Cancelar",
+      createOpportunity: "Crear oportunidad",
+      emptyTitle: "Añade tu primera fuente",
+      emptyDescription:
+        "Comparte un archivo o conecta un sistema para que Heighliner encuentre oportunidades.",
+      addSource: "Añadir una fuente",
       heading: (count) => `Se encontraron ${count} rutas valiosas.`,
       description:
         "Empieza por la ruta con mayor confianza. Puedes inspeccionar y cambiar cada paso antes de ejecutarlo.",
@@ -890,6 +918,7 @@ const translations: Record<Lang, Copy> = {
       emptyTitle: "Crea tu primera ruta",
       emptyDescription:
         "Elige una oportunidad y Heighliner construirá la ruta a partir de tus sistemas conectados.",
+      viewOpportunities: "Ver oportunidades",
       overviewTitle: "Tus rutas",
       overviewDescription:
         "Procesos impulsados por IA ejecutándose en Amazonik.",
@@ -913,7 +942,6 @@ const translations: Record<Lang, Copy> = {
         `${count} ruta${count === 1 ? "" : "s"} activa${count === 1 ? "" : "s"}`,
     },
     review: {
-      tag: "Punto de revisión humana",
       title: "Confirma la mejor coincidencia",
       description:
         "Heighliner encontró dos resultados posibles. Elige uno para continuar.",
@@ -1025,7 +1053,16 @@ const translations: Record<Lang, Copy> = {
     opportunities: {
       title: "Kansen",
       subtitle: "Routes die Heighliner vond op basis van je bedrijfscontext",
-      tag: "Ontdekking voltooid",
+      newOpportunity: "Nieuwe kans",
+      newOpportunityTitle: "Kans maken",
+      titleLabel: "Titel",
+      descriptionLabel: "Beschrijving",
+      cancel: "Annuleren",
+      createOpportunity: "Kans maken",
+      emptyTitle: "Voeg je eerste bron toe",
+      emptyDescription:
+        "Deel een bestand of koppel een systeem zodat Heighliner kansen voor je kan vinden.",
+      addSource: "Bron toevoegen",
       heading: (count) => `${count} waardevolle routes gevonden.`,
       description:
         "Begin met de route met de hoogste betrouwbaarheid. Je kunt elke stap bekijken en aanpassen voordat je hem uitvoert.",
@@ -1049,6 +1086,7 @@ const translations: Record<Lang, Copy> = {
       emptyTitle: "Maak je eerste route",
       emptyDescription:
         "Kies een kans en Heighliner bouwt de route vanuit je gekoppelde systemen.",
+      viewOpportunities: "Bekijk kansen",
       overviewTitle: "Jouw routes",
       overviewDescription: "AI-gestuurde processen die draaien bij Amazonik.",
       active: "Actief",
@@ -1071,7 +1109,6 @@ const translations: Record<Lang, Copy> = {
         `${count} actieve ${count === 1 ? "route" : "routes"}`,
     },
     review: {
-      tag: "Menselijk controlepunt",
       title: "Bevestig de beste match",
       description:
         "Heighliner vond twee mogelijke resultaten. Kies er een om door te gaan.",
@@ -1155,7 +1192,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
         alt=""
         className="h-[18px] w-auto shrink-0"
       />
-      <span className="text-[17px] font-semibold tracking-[-.035em]">
+      <span className="wordmark text-[17px] font-semibold tracking-[-.035em]">
         Heighliner
       </span>
     </>
@@ -1178,7 +1215,6 @@ function Logo({ onClick }: { onClick?: () => void }) {
 
 type LandingCopy = {
   navContact: string;
-  eyebrow: string;
   title: string;
   body: string;
   contactButton: string;
@@ -1189,10 +1225,8 @@ type LandingCopy = {
   opportunity: string;
   opportunityBody: string;
   saved: string;
-  routeTag: string;
   routeTitle: string;
   steps: [string, string][];
-  contactTag: string;
   contactTitle: string;
   contactBody: string;
   fields: {
@@ -1206,7 +1240,6 @@ type LandingCopy = {
   submit: string;
   submitSuccess: string;
   submitError: string;
-  exampleTag: string;
   exampleTitle: string;
   exampleBody: string;
   exampleButton: string;
@@ -1230,19 +1263,17 @@ type LandingCopy = {
 const landingCopy: Record<Lang, LandingCopy> = {
   en: {
     navContact: "Contact",
-    eyebrow: "Practical AI for operations",
     title: "Find and automate your company’s repetitive work.",
     body: "You don’t need to know what to automate. Tell Heighliner how your company works and it will find the opportunities for you.",
     contactButton: "Tell us about your company",
     demo: "View an example",
-    deploy: "Deploy it yourself",
+    deploy: "Host it yourself",
     previewTag: "your company workspace",
     previewTitle: "6 valuable routes found",
     opportunity: "Automate incoming orders",
     opportunityBody:
       "Extract orders, validate products, and create clean records in Salesforce.",
     saved: "8h saved / week",
-    routeTag: "From interview to automation",
     routeTitle:
       "After one interview, we connect your systems in a day. Then Heighliner finds the opportunities, builds the routes, and takes repetitive work off your team.",
     steps: [
@@ -1263,7 +1294,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
         "Routes keep running, your team handles fewer manual tasks, and the company becomes more efficient.",
       ],
     ],
-    contactTag: "Start with context, not an automation idea",
     contactTitle: "Tell us how your company works.",
     contactBody:
       "You don’t need to prepare a list of processes to automate. Share the basics and, if you want, where work gets stuck; Heighliner will find and prioritize the best opportunities anyway.",
@@ -1278,7 +1308,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
     submit: "Send inquiry",
     submitSuccess: "We'll reach out as soon as possible.",
     submitError: "Something went wrong. Please try again.",
-    exampleTag: "Want to see it first?",
     exampleTitle: "See how it worked for a small souvenir company in Spain.",
     exampleBody:
       "Explore a real workspace, the opportunities Heighliner found, and the routes it built.",
@@ -1305,7 +1334,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
   },
   es: {
     navContact: "Contacto",
-    eyebrow: "IA práctica para operaciones",
     title: "Encontramos y automatizamos el trabajo repetitivo de tu empresa.",
     body: "No tienes que saber qué automatizar. Cuéntale a Heighliner cómo funciona tu empresa y encontrará las oportunidades por ti.",
     contactButton: "Cuéntanos sobre tu empresa",
@@ -1317,7 +1345,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
     opportunityBody:
       "Extrae pedidos, valida productos y crea registros limpios en Salesforce.",
     saved: "8 h ahorradas / semana",
-    routeTag: "De la entrevista a la automatización",
     routeTitle:
       "Tras una entrevista, conectamos tus sistemas en un día. Después, Heighliner encuentra las oportunidades, construye las rutas y libera a tu equipo del trabajo repetitivo.",
     steps: [
@@ -1338,7 +1365,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
         "Las rutas siguen funcionando, tu equipo hace menos tareas manuales y la empresa se vuelve más eficiente.",
       ],
     ],
-    contactTag: "Empieza con contexto, no con una idea de automatización",
     contactTitle: "Cuéntanos cómo funciona tu empresa.",
     contactBody:
       "No necesitas preparar una lista de procesos para automatizar. Comparte lo básico y, si quieres, dónde se atasca el trabajo; Heighliner encontrará y priorizará igualmente las mejores oportunidades.",
@@ -1353,7 +1379,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
     submit: "Enviar consulta",
     submitSuccess: "Nos pondremos en contacto lo antes posible.",
     submitError: "Algo salió mal. Inténtalo de nuevo.",
-    exampleTag: "¿Prefieres verlo primero?",
     exampleTitle:
       "Mira cómo funcionó para una pequeña empresa de souvenirs en España.",
     exampleBody:
@@ -1377,7 +1402,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
   },
   nl: {
     navContact: "Contact",
-    eyebrow: "Praktische AI voor operations",
     title: "We vinden en automatiseren het repetitieve werk van je bedrijf.",
     body: "Je hoeft niet te weten wat je moet automatiseren. Vertel Heighliner hoe je bedrijf werkt en het vindt de kansen voor je.",
     contactButton: "Vertel ons over je bedrijf",
@@ -1389,7 +1413,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
     opportunityBody:
       "Haal orders eruit, valideer producten en maak schone records in Salesforce.",
     saved: "8 uur bespaard / week",
-    routeTag: "Van interview tot automatisering",
     routeTitle:
       "Na één interview koppelen we je systemen binnen een dag. Daarna vindt Heighliner de kansen, bouwt de routes en neemt repetitief werk uit handen.",
     steps: [
@@ -1410,7 +1433,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
         "Routes blijven draaien, je team doet minder handmatig werk en het bedrijf wordt efficiënter.",
       ],
     ],
-    contactTag: "Begin met context, niet met een automatiseringsidee",
     contactTitle: "Vertel ons hoe je bedrijf werkt.",
     contactBody:
       "Je hoeft geen lijst met te automatiseren processen klaar te hebben. Deel de basis en, als je wilt, waar werk vastloopt; Heighliner vindt en prioriteert alsnog de beste kansen.",
@@ -1425,7 +1447,6 @@ const landingCopy: Record<Lang, LandingCopy> = {
     submit: "Aanvraag versturen",
     submitSuccess: "We nemen zo snel mogelijk contact met je op.",
     submitError: "Er ging iets mis. Probeer het opnieuw.",
-    exampleTag: "Eerst even kijken?",
     exampleTitle:
       "Bekijk hoe het werkte voor een klein souvenirbedrijf in Spanje.",
     exampleBody:
@@ -1608,10 +1629,7 @@ function Landing({ explore }: { explore: () => void }) {
       <main className="mx-auto w-full max-w-[1280px] pb-24 sm:pb-32">
         <section className="grid items-center gap-14 pb-24 pt-16 sm:pb-32 sm:pt-24 lg:grid-cols-[.78fr_1.22fr] lg:gap-16 lg:pt-14">
           <div className="text-center lg:text-left">
-            <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-[#df6027]">
-              {copy.eyebrow}
-            </p>
-            <h1 className="mx-auto mt-6 max-w-[920px] text-[clamp(2.5rem,5vw,4.4rem)] font-semibold leading-[.9] tracking-[-.075em] lg:mx-0">
+            <h1 className="mx-auto max-w-[920px] text-[clamp(2.5rem,5vw,4.4rem)] font-semibold leading-[.9] tracking-[-.075em] lg:mx-0">
               {copy.title}
             </h1>
             <p className="mx-auto mt-7 max-w-[590px] text-[15px] leading-7 text-[#6f6f6a] sm:text-[17px] lg:mx-0 lg:max-w-[460px]">
@@ -1712,10 +1730,7 @@ function Landing({ explore }: { explore: () => void }) {
                     </span>
                   </div>
                   <div className="p-5 sm:p-6">
-                    <p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#df6027]">
-                      {copy.preview.discoveryComplete}
-                    </p>
-                    <h2 className="mt-3 text-[27px] font-semibold tracking-[-.05em] sm:text-[34px]">
+                    <h2 className="text-[27px] font-semibold tracking-[-.05em] sm:text-[34px]">
                       {copy.previewTitle}
                     </h2>
                     <div className="mt-7 grid gap-3 lg:grid-cols-[1.3fr_.7fr]">
@@ -1745,7 +1760,7 @@ function Landing({ explore }: { explore: () => void }) {
                         </div>
                       </div>
                       <div className="rounded-[20px] bg-[#20201f] p-5 text-white">
-                        <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-white/45">
+                        <p className="text-[11px] font-medium text-white/45">
                           {copy.preview.impactEffort}
                         </p>
                         <div className="relative mt-5 h-[150px] rounded-[15px] border border-white/10">
@@ -1796,504 +1811,508 @@ function Landing({ explore }: { explore: () => void }) {
           </div>
         </section>
 
-        <section className="border-t border-black/[.08] py-24 sm:py-32">
-          <h2 className="max-w-3xl text-[18px] font-medium leading-7 tracking-[-.02em] text-[#555550] sm:text-[20px]">
-            {copy.routeTitle}
-          </h2>
-          <div className="mt-10 grid gap-8 lg:grid-cols-[1.12fr_.88fr] lg:items-stretch">
-            <div className="min-h-[500px] overflow-hidden rounded-[30px] bg-[#20201f] p-6 text-white sm:p-8">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-semibold uppercase tracking-[.15em] text-[#ff8a4d]">
-                  0{activeJourney + 1} · {copy.steps[activeJourney][0]}
-                </span>
-                <span className="h-2 w-2 rounded-full bg-[#6fc783] shadow-[0_0_0_5px_rgba(111,199,131,.1)]" />
-              </div>
+        <div className="mx-auto max-w-[1180px]">
+          <section className="border-t border-black/[.08] py-24 sm:py-32">
+            <h2 className="max-w-3xl text-[18px] font-medium leading-7 tracking-[-.02em] text-[#555550] sm:text-[20px]">
+              {copy.routeTitle}
+            </h2>
+            <div className="mt-10 grid gap-8 lg:grid-cols-[1.12fr_.88fr] lg:items-stretch">
+              <div className="min-h-[500px] overflow-hidden rounded-[30px] bg-[#20201f] p-6 text-white sm:p-8">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-medium text-[#ff8a4d]">
+                    {activeJourney + 1} · {copy.steps[activeJourney][0]}
+                  </span>
+                  <span className="h-2 w-2 rounded-full bg-[#6fc783] shadow-[0_0_0_5px_rgba(111,199,131,.1)]" />
+                </div>
 
-              <div key={activeJourney} className="landing-journey-visual">
-                {activeJourney === 0 && (
-                  <div className="grid h-[410px] place-items-center">
-                    <div className="grid w-full max-w-[520px] grid-cols-[1fr_56px_1.1fr] items-center gap-y-3">
-                      {["Gmail", "Google Drive", "Salesforce"].map(
-                        (system, index) => (
-                          <div key={system} className="contents">
-                            <div className="flex items-center gap-3 rounded-[15px] border border-white/10 bg-white/[.055] p-3.5">
-                              <SystemMark name={system} />
-                              <span className="text-[10px] font-medium">
-                                {system}
-                              </span>
-                            </div>
-                            <div className="relative h-px bg-white/15">
-                              <span
-                                className="landing-source-pulse"
-                                style={{ animationDelay: `${index * 0.3}s` }}
-                              />
-                            </div>
-                            {index === 0 ? (
-                              <div className="row-span-3 flex h-full min-h-[190px] flex-col items-center justify-center rounded-[22px] border border-[#ff8a4d]/30 bg-[#ff7a35]/10 p-5 text-center">
-                                <HugeiconsIcon
-                                  icon={Database01Icon}
-                                  size={22}
-                                />
-                                <p className="mt-4 text-[13px] font-semibold">
-                                  {translations[lang].sources.companyKnowledge}
-                                </p>
-                                <p className="mt-2 text-[9px] leading-4 text-white/45">
-                                  {translations[lang].sources.connectedSystems}
-                                </p>
+                <div key={activeJourney} className="landing-journey-visual">
+                  {activeJourney === 0 && (
+                    <div className="grid h-[410px] place-items-center">
+                      <div className="grid w-full max-w-[520px] grid-cols-[1fr_56px_1.1fr] items-center gap-y-3">
+                        {["Gmail", "Google Drive", "Salesforce"].map(
+                          (system, index) => (
+                            <div key={system} className="contents">
+                              <div className="flex items-center gap-3 rounded-[15px] border border-white/10 bg-white/[.055] p-3.5">
+                                <SystemMark name={system} />
+                                <span className="text-[10px] font-medium">
+                                  {system}
+                                </span>
                               </div>
-                            ) : null}
-                          </div>
-                        ),
-                      )}
+                              <div className="relative h-px bg-white/15">
+                                <span
+                                  className="landing-source-pulse"
+                                  style={{ animationDelay: `${index * 0.3}s` }}
+                                />
+                              </div>
+                              {index === 0 ? (
+                                <div className="row-span-3 flex h-full min-h-[190px] flex-col items-center justify-center rounded-[22px] border border-[#ff8a4d]/30 bg-[#ff7a35]/10 p-5 text-center">
+                                  <HugeiconsIcon
+                                    icon={Database01Icon}
+                                    size={22}
+                                  />
+                                  <p className="mt-4 text-[13px] font-semibold">
+                                    {
+                                      translations[lang].sources
+                                        .companyKnowledge
+                                    }
+                                  </p>
+                                  <p className="mt-2 text-[9px] leading-4 text-white/45">
+                                    {
+                                      translations[lang].sources
+                                        .connectedSystems
+                                    }
+                                  </p>
+                                </div>
+                              ) : null}
+                            </div>
+                          ),
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {activeJourney === 1 && (
-                  <div className="flex h-[410px] flex-col justify-center">
-                    <p className="text-[11px] text-white/45">
-                      {copy.preview.discoveryComplete}
-                    </p>
-                    <h3 className="mt-2 text-[28px] font-semibold tracking-[-.045em]">
-                      {copy.previewTitle}
-                    </h3>
-                    <div className="mt-7 space-y-2.5">
-                      {[
-                        copy.opportunity,
-                        ...copy.preview.cards.slice(0, 2),
-                      ].map((title, index) => (
-                        <div
-                          key={title}
-                          className="landing-result-card flex items-center gap-4 rounded-[16px] border border-white/10 bg-white/[.055] p-4"
-                          style={{ animationDelay: `${index * 55}ms` }}
-                        >
-                          <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-white/10 text-[#ff9a69]">
-                            <HugeiconsIcon icon={SparklesIcon} size={15} />
-                          </span>
-                          <span className="min-w-0 flex-1 truncate text-[11px] font-medium">
-                            {title}
-                          </span>
-                          <span className="text-[10px] font-semibold text-white/55">
-                            {["8h", "5h", "4h"][index]}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeJourney === 2 && (
-                  <div className="mt-3 h-[397px] overflow-hidden p-4">
-                    <p className="text-[9px] font-medium text-white/40">
-                      {copy.opportunity}
-                    </p>
-                    <div className="relative mx-auto mt-3 w-full max-w-[440px]">
-                      <svg
-                        aria-hidden="true"
-                        className="landing-route-traveler pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-visible"
-                        viewBox="0 0 440 320"
-                        preserveAspectRatio="none"
-                      >
-                        {Array.from({ length: 6 }, (_, index) => ({
-                          begin: `${index * 1.5}s`,
-                          path:
-                            index % 2 === 0
-                              ? "M220 60 V224 H106 V260"
-                              : "M220 60 V224 H334 V260",
-                        })).map(({ begin, path }) => (
-                          <g key={begin}>
-                            <circle r="5" fill="#ff8a4d" opacity="0">
-                              <animate
-                                attributeName="opacity"
-                                begin={begin}
-                                dur="9s"
-                                keyTimes="0;.01;.48;.5;1"
-                                repeatCount="indefinite"
-                                values="0;.12;.12;0;0"
-                              />
-                              <animateMotion
-                                begin={begin}
-                                calcMode="linear"
-                                dur="9s"
-                                keyPoints="0;1;1"
-                                keyTimes="0;.5;1"
-                                path={path}
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-                            <circle r="2.5" fill="#ff8a4d" opacity="0">
-                              <animate
-                                attributeName="opacity"
-                                begin={begin}
-                                dur="9s"
-                                keyTimes="0;.01;.48;.5;1"
-                                repeatCount="indefinite"
-                                values="0;1;1;0;0"
-                              />
-                              <animateMotion
-                                begin={begin}
-                                calcMode="linear"
-                                dur="9s"
-                                keyPoints="0;1;1"
-                                keyTimes="0;.5;1"
-                                path={path}
-                                repeatCount="indefinite"
-                              />
-                            </circle>
-                          </g>
-                        ))}
-                      </svg>
-                      {[
-                        [
-                          Mail01Icon,
-                          "Gmail",
-                          translations[lang].flow.newItem,
-                          "bg-[#ececea] text-[#555550]",
-                        ],
-                        [
-                          BotIcon,
-                          translations[lang].flow.aiTransformation,
-                          translations[lang].flow.nodeKinds.ai,
-                          "bg-[#fff0e8] text-[#cb501d]",
-                        ],
-                        [
-                          GitBranchIcon,
-                          translations[lang].flow.confidenceCheck,
-                          translations[lang].flow.confidenceQuestion,
-                          "bg-[#eeeaf3] text-[#67607e]",
-                        ],
-                      ].map(([icon, title, detail, tone], index) => (
-                        <div key={String(title)}>
+                  {activeJourney === 1 && (
+                    <div className="flex h-[410px] flex-col justify-center">
+                      <p className="text-[11px] text-white/45">
+                        {copy.preview.discoveryComplete}
+                      </p>
+                      <h3 className="mt-2 text-[28px] font-semibold tracking-[-.045em]">
+                        {copy.previewTitle}
+                      </h3>
+                      <div className="mt-7 space-y-2.5">
+                        {[
+                          copy.opportunity,
+                          ...copy.preview.cards.slice(0, 2),
+                        ].map((title, index) => (
                           <div
-                            className="landing-result-card relative z-10 mx-auto flex w-[230px] items-center gap-3 rounded-[17px] border border-white/10 bg-[#2c2c2a] p-3 text-white shadow-[0_1px_2px_rgba(0,0,0,.12),0_8px_22px_rgba(0,0,0,.18)]"
+                            key={title}
+                            className="landing-result-card flex items-center gap-4 rounded-[16px] border border-white/10 bg-white/[.055] p-4"
                             style={{ animationDelay: `${index * 55}ms` }}
                           >
-                            <span
-                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] ${String(tone)}`}
-                            >
-                              <HugeiconsIcon
-                                icon={icon as typeof Route01Icon}
-                                size={14}
-                              />
+                            <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-white/10 text-[#ff9a69]">
+                              <HugeiconsIcon icon={SparklesIcon} size={15} />
                             </span>
-                            <span className="min-w-0">
-                              <span className="block truncate text-[11px] font-semibold">
-                                {String(title)}
-                              </span>
-                              <span className="mt-0.5 block truncate text-[9px] text-white/45">
-                                {String(detail)}
-                              </span>
+                            <span className="min-w-0 flex-1 truncate text-[11px] font-medium">
+                              {title}
                             </span>
-                          </div>
-                          {index < 2 && (
-                            <span className="relative mx-auto block h-4 w-px border-l border-dashed border-[#aaa9a4]" />
-                          )}
-                        </div>
-                      ))}
-
-                      <div className="relative h-12 w-full text-[7px] text-white/40">
-                        <svg
-                          aria-hidden="true"
-                          className="landing-route-branch absolute inset-0 h-full w-full overflow-visible"
-                          viewBox="0 0 440 48"
-                          preserveAspectRatio="none"
-                        >
-                          <path
-                            d="M220 0 V12 H106 V48"
-                            fill="none"
-                            stroke="#aaa9a4"
-                            strokeDasharray="4 4"
-                          />
-                          <path
-                            d="M220 12 H334 V48"
-                            fill="none"
-                            stroke="#aaa9a4"
-                            strokeDasharray="4 4"
-                          />
-                        </svg>
-                        <span className="absolute left-2 top-3 -translate-y-1/2 bg-[#20201f] px-1">
-                          {translations[lang].flow.reviewEdge}
-                        </span>
-                        <span className="absolute right-2 top-3 -translate-y-1/2 bg-[#20201f] px-1">
-                          {translations[lang].flow.confidenceEdge}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        {[
-                          [
-                            UserCheck01Icon,
-                            translations[lang].flow.humanReview,
-                            translations[lang].flow.resolveUncertainty,
-                            "bg-[#e9eef2] text-[#627280]",
-                          ],
-                          [
-                            Database01Icon,
-                            translations[lang].flow.updateDestination(
-                              "Salesforce",
-                            ),
-                            translations[lang].flow.completeAction,
-                            "bg-[#ececea] text-[#555550]",
-                          ],
-                        ].map(([icon, title, detail, tone], index) => (
-                          <div
-                            key={String(title)}
-                            className="landing-result-card relative z-10 flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/10 bg-[#2c2c2a] p-3 text-white shadow-[0_1px_2px_rgba(0,0,0,.12),0_8px_22px_rgba(0,0,0,.18)]"
-                            style={{ animationDelay: `${(index + 3) * 55}ms` }}
-                          >
-                            <span
-                              className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] ${String(tone)}`}
-                            >
-                              <HugeiconsIcon
-                                icon={icon as typeof Route01Icon}
-                                size={14}
-                              />
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block truncate text-[10px] font-semibold">
-                                {String(title)}
-                              </span>
-                              <span className="mt-0.5 block truncate text-[8px] text-white/45">
-                                {String(detail)}
-                              </span>
+                            <span className="text-[10px] font-semibold text-white/55">
+                              {["8h", "5h", "4h"][index]}
                             </span>
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {activeJourney === 3 && (
-                  <div className="flex h-[410px] flex-col justify-center">
-                    <div className="flex items-center gap-3 text-[#75cb8a]">
-                      <HugeiconsIcon icon={CheckmarkCircle02Icon} size={20} />
-                      <span className="text-[11px] font-semibold">
-                        {translations[lang].flow.routeComplete}
-                      </span>
-                    </div>
-                    <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                      {[
-                        ["24", translations[lang].routes.runsThisWeek],
-                        ["96%", translations[lang].routes.success],
-                        ["8h", translations[lang].routes.savedPerWeek],
-                      ].map(([value, label]) => (
-                        <div
-                          key={String(label)}
-                          className="rounded-[18px] border border-white/10 bg-white/[.055] p-5"
+                  {activeJourney === 2 && (
+                    <div className="mt-3 h-[397px] overflow-hidden p-4">
+                      <p className="text-[9px] font-medium text-white/40">
+                        {copy.opportunity}
+                      </p>
+                      <div className="relative mx-auto mt-3 w-full max-w-[440px]">
+                        <svg
+                          aria-hidden="true"
+                          className="landing-route-traveler pointer-events-none absolute inset-0 z-[1] h-full w-full overflow-visible"
+                          viewBox="0 0 440 320"
+                          preserveAspectRatio="none"
                         >
-                          <p className="text-[28px] font-semibold tracking-[-.04em]">
-                            {value}
-                          </p>
-                          <p className="mt-2 text-[9px] text-white/40">
-                            {String(label)}
-                          </p>
+                          {Array.from({ length: 6 }, (_, index) => ({
+                            begin: `${index * 1.5}s`,
+                            path:
+                              index % 2 === 0
+                                ? "M220 60 V224 H106 V260"
+                                : "M220 60 V224 H334 V260",
+                          })).map(({ begin, path }) => (
+                            <g key={begin}>
+                              <circle r="5" fill="#ff8a4d" opacity="0">
+                                <animate
+                                  attributeName="opacity"
+                                  begin={begin}
+                                  dur="9s"
+                                  keyTimes="0;.01;.48;.5;1"
+                                  repeatCount="indefinite"
+                                  values="0;.12;.12;0;0"
+                                />
+                                <animateMotion
+                                  begin={begin}
+                                  calcMode="linear"
+                                  dur="9s"
+                                  keyPoints="0;1;1"
+                                  keyTimes="0;.5;1"
+                                  path={path}
+                                  repeatCount="indefinite"
+                                />
+                              </circle>
+                              <circle r="2.5" fill="#ff8a4d" opacity="0">
+                                <animate
+                                  attributeName="opacity"
+                                  begin={begin}
+                                  dur="9s"
+                                  keyTimes="0;.01;.48;.5;1"
+                                  repeatCount="indefinite"
+                                  values="0;1;1;0;0"
+                                />
+                                <animateMotion
+                                  begin={begin}
+                                  calcMode="linear"
+                                  dur="9s"
+                                  keyPoints="0;1;1"
+                                  keyTimes="0;.5;1"
+                                  path={path}
+                                  repeatCount="indefinite"
+                                />
+                              </circle>
+                            </g>
+                          ))}
+                        </svg>
+                        {[
+                          [
+                            Mail01Icon,
+                            "Gmail",
+                            translations[lang].flow.newItem,
+                            "bg-[#ececea] text-[#555550]",
+                          ],
+                          [
+                            BotIcon,
+                            translations[lang].flow.aiTransformation,
+                            translations[lang].flow.nodeKinds.ai,
+                            "bg-[#fff0e8] text-[#cb501d]",
+                          ],
+                          [
+                            GitBranchIcon,
+                            translations[lang].flow.confidenceCheck,
+                            translations[lang].flow.confidenceQuestion,
+                            "bg-[#eeeaf3] text-[#67607e]",
+                          ],
+                        ].map(([icon, title, detail, tone], index) => (
+                          <div key={String(title)}>
+                            <div
+                              className="landing-result-card relative z-10 mx-auto flex w-[230px] items-center gap-3 rounded-[17px] border border-white/10 bg-[#2c2c2a] p-3 text-white shadow-[0_1px_2px_rgba(0,0,0,.12),0_8px_22px_rgba(0,0,0,.18)]"
+                              style={{ animationDelay: `${index * 55}ms` }}
+                            >
+                              <span
+                                className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] ${String(tone)}`}
+                              >
+                                <HugeiconsIcon
+                                  icon={icon as typeof Route01Icon}
+                                  size={14}
+                                />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-[11px] font-semibold">
+                                  {String(title)}
+                                </span>
+                                <span className="mt-0.5 block truncate text-[9px] text-white/45">
+                                  {String(detail)}
+                                </span>
+                              </span>
+                            </div>
+                            {index < 2 && (
+                              <span className="relative mx-auto block h-4 w-px border-l border-dashed border-[#aaa9a4]" />
+                            )}
+                          </div>
+                        ))}
+
+                        <div className="relative h-12 w-full text-[7px] text-white/40">
+                          <svg
+                            aria-hidden="true"
+                            className="landing-route-branch absolute inset-0 h-full w-full overflow-visible"
+                            viewBox="0 0 440 48"
+                            preserveAspectRatio="none"
+                          >
+                            <path
+                              d="M220 0 V12 H106 V48"
+                              fill="none"
+                              stroke="#aaa9a4"
+                              strokeDasharray="4 4"
+                            />
+                            <path
+                              d="M220 12 H334 V48"
+                              fill="none"
+                              stroke="#aaa9a4"
+                              strokeDasharray="4 4"
+                            />
+                          </svg>
+                          <span className="absolute left-2 top-3 -translate-y-1/2 bg-[#20201f] px-1">
+                            {translations[lang].flow.reviewEdge}
+                          </span>
+                          <span className="absolute right-2 top-3 -translate-y-1/2 bg-[#20201f] px-1">
+                            {translations[lang].flow.confidenceEdge}
+                          </span>
                         </div>
-                      ))}
+
+                        <div className="grid grid-cols-2 gap-4">
+                          {[
+                            [
+                              UserCheck01Icon,
+                              translations[lang].flow.humanReview,
+                              translations[lang].flow.resolveUncertainty,
+                              "bg-[#e9eef2] text-[#627280]",
+                            ],
+                            [
+                              Database01Icon,
+                              translations[lang].flow.updateDestination(
+                                "Salesforce",
+                              ),
+                              translations[lang].flow.completeAction,
+                              "bg-[#ececea] text-[#555550]",
+                            ],
+                          ].map(([icon, title, detail, tone], index) => (
+                            <div
+                              key={String(title)}
+                              className="landing-result-card relative z-10 flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/10 bg-[#2c2c2a] p-3 text-white shadow-[0_1px_2px_rgba(0,0,0,.12),0_8px_22px_rgba(0,0,0,.18)]"
+                              style={{
+                                animationDelay: `${(index + 3) * 55}ms`,
+                              }}
+                            >
+                              <span
+                                className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] ${String(tone)}`}
+                              >
+                                <HugeiconsIcon
+                                  icon={icon as typeof Route01Icon}
+                                  size={14}
+                                />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-[10px] font-semibold">
+                                  {String(title)}
+                                </span>
+                                <span className="mt-0.5 block truncate text-[8px] text-white/45">
+                                  {String(detail)}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+
+                  {activeJourney === 3 && (
+                    <div className="flex h-[410px] flex-col justify-center">
+                      <div className="flex items-center gap-3 text-[#75cb8a]">
+                        <HugeiconsIcon icon={CheckmarkCircle02Icon} size={20} />
+                        <span className="text-[11px] font-semibold">
+                          {translations[lang].flow.routeComplete}
+                        </span>
+                      </div>
+                      <div className="mt-8 grid gap-3 sm:grid-cols-3">
+                        {[
+                          ["24", translations[lang].routes.runsThisWeek],
+                          ["96%", translations[lang].routes.success],
+                          ["8h", translations[lang].routes.savedPerWeek],
+                        ].map(([value, label]) => (
+                          <div
+                            key={String(label)}
+                            className="rounded-[18px] border border-white/10 bg-white/[.055] p-5"
+                          >
+                            <p className="text-[28px] font-semibold tracking-[-.04em]">
+                              {value}
+                            </p>
+                            <p className="mt-2 text-[9px] text-white/40">
+                              {String(label)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col border-t border-black/[.09]">
-              {copy.steps.map(([title, description], index) => (
-                <button
-                  key={title}
-                  type="button"
-                  onMouseEnter={() => setActiveJourney(index)}
-                  onFocus={() => setActiveJourney(index)}
-                  onClick={() => setActiveJourney(index)}
-                  className="pressable group flex flex-1 gap-5 border-b border-black/[.09] py-5 text-left sm:px-3"
-                >
-                  <span
-                    className={`mt-1 text-[10px] font-semibold ${activeJourney === index ? "text-[#df6027]" : "text-[#aaa9a4]"}`}
-                  >
-                    0{index + 1}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span
-                      className={`block text-[18px] font-semibold tracking-[-.03em] ${activeJourney === index ? "text-[#20201f]" : "text-[#999994]"}`}
-                    >
-                      {title}
-                    </span>
-                    <span
-                      className={`mt-2 block max-w-md text-[11px] leading-5 ${activeJourney === index ? "text-[#6f6f6a]" : "text-[#aaa9a4]"}`}
-                    >
-                      {description}
-                    </span>
-                  </span>
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    size={15}
-                    className={`mt-1 ${activeJourney === index ? "text-[#20201f]" : "text-[#c3c3bf]"}`}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section
-          id="contact"
-          className="scroll-mt-6 border-t border-black/[.08] py-24 sm:py-32"
-        >
-          <div className="grid gap-12 lg:grid-cols-[.78fr_1.22fr]">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#df6027]">
-                {copy.contactTag}
-              </p>
-              <h2 className="mt-5 max-w-[560px] text-[clamp(2.8rem,5vw,5.4rem)] font-semibold leading-[.94] tracking-[-.065em]">
-                {copy.contactTitle}
-              </h2>
-              <p className="mt-6 max-w-md text-[14px] leading-6 text-[#6f6f6a]">
-                {copy.contactBody}
-              </p>
-            </div>
-            <form
-              onSubmit={submitLead}
-              className="grid gap-4 rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_18px_55px_rgba(0,0,0,.055)] sm:grid-cols-2 sm:p-7"
-            >
-              <TextField
-                label={copy.fields.company}
-                value={lead.name}
-                onChange={(value) => updateLead("name", value)}
-                placeholder="Amazonik"
-              />
-              <label className="block">
-                <span className="mb-2 block text-[12px] font-medium">
-                  {copy.fields.email}
-                </span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => {
-                    clearInquiryError();
-                    setEmail(event.target.value);
-                  }}
-                  placeholder="you@company.com"
-                  className="h-12 w-full rounded-[14px] bg-[#f7f7f5] px-4 text-[13px] outline-none ring-[#ff7a35] placeholder:text-[#aaa9a5] focus:ring-2"
-                />
-              </label>
-              <TextField
-                label={copy.fields.size}
-                value={lead.size}
-                onChange={(value) => updateLead("size", value)}
-                select
-                selectOptions={translations[lang].onboarding.teamSizes}
-              />
-              <TextField
-                wide
-                label={copy.fields.does}
-                value={lead.description}
-                onChange={(value) => updateLead("description", value)}
-                placeholder={
-                  translations[lang].onboarding.companyDescriptionPlaceholder
-                }
-              />
-              <label className="block sm:col-span-2">
-                <span className="mb-1.5 block text-[12px] font-medium">
-                  {copy.fields.bottlenecks}
-                </span>
-                <span className="mb-2 block text-[10px] text-[#8a8a85]">
-                  {copy.optional}
-                </span>
-                <textarea
-                  value={lead.bottlenecks}
-                  onChange={(event) =>
-                    updateLead("bottlenecks", event.target.value)
-                  }
-                  placeholder={
-                    translations[lang].onboarding.bottlenecksPlaceholder
-                  }
-                  rows={3}
-                  className="w-full resize-none rounded-[14px] bg-[#f7f7f5] px-4 py-3 text-[13px] leading-5 outline-none ring-[#ff7a35] placeholder:text-[#aaa9a5] focus:ring-2"
-                />
-              </label>
-              <div className="flex flex-col items-end gap-3 sm:col-span-2">
-                {inquiryState === "success" ? (
-                  <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[#20201f]">
-                    <HugeiconsIcon icon={CheckIcon} size={16} />
-                    {copy.submitSuccess}
-                  </span>
-                ) : (
-                  <>
-                    {inquiryState === "error" ? (
-                      <span className="inline-flex items-center gap-2 text-[12px] font-medium text-[#df6027]">
-                        <HugeiconsIcon icon={Cancel01Icon} size={14} />
-                        {copy.submitError}
-                      </span>
-                    ) : null}
-                    <Button
-                      type="submit"
-                      disabled={
-                        inquiryState === "submitting" ||
-                        !lead.name.trim() ||
-                        !lead.description.trim() ||
-                        !email.trim()
-                      }
-                    >
-                      {copy.submit}
-                      {inquiryState === "submitting" ? (
-                        <HugeiconsIcon
-                          icon={Loading01Icon}
-                          size={14}
-                          className="animate-spin"
-                        />
-                      ) : (
-                        <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
-                      )}
-                    </Button>
-                  </>
-                )}
-              </div>
-            </form>
-          </div>
-        </section>
-
-        <section className="rounded-[28px] bg-[#20201f] px-6 py-16 text-white sm:rounded-[36px] sm:px-12 sm:py-20 lg:px-20">
-          <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#ff8a4d]">
-            {copy.exampleTag}
-          </p>
-          <div className="mt-5 grid gap-10 lg:grid-cols-[1.2fr_.8fr]">
-            <h2 className="max-w-[760px] text-[clamp(2.6rem,5vw,5.5rem)] font-semibold leading-[.94] tracking-[-.065em]">
-              {copy.exampleTitle}
-            </h2>
-            <div>
-              <p className="max-w-md text-[13px] leading-6 text-white/60">
-                {copy.exampleBody}
-              </p>
-              <div className="mt-8 flex flex-col items-start gap-5">
-                <img
-                  src={amazonikLogo}
-                  alt="Amazonik"
-                  className="h-24 w-24 shrink-0 object-contain sm:h-28 sm:w-28"
-                />
-                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col border-t border-black/[.09]">
+                {copy.steps.map(([title, description], index) => (
                   <button
+                    key={title}
                     type="button"
-                    onClick={explore}
-                    className="pressable inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[13px] font-medium text-[#20201f]"
+                    onMouseEnter={() => setActiveJourney(index)}
+                    onFocus={() => setActiveJourney(index)}
+                    onClick={() => setActiveJourney(index)}
+                    className="pressable group flex flex-1 gap-5 border-b border-black/[.09] py-5 text-left sm:px-3"
                   >
-                    {copy.exampleButton}
-                    <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+                    <span
+                      className={`mt-1 text-[10px] font-semibold ${activeJourney === index ? "text-[#df6027]" : "text-[#aaa9a4]"}`}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={`block text-[18px] font-semibold tracking-[-.03em] ${activeJourney === index ? "text-[#20201f]" : "text-[#999994]"}`}
+                      >
+                        {title}
+                      </span>
+                      <span
+                        className={`mt-2 block max-w-md text-[11px] leading-5 ${activeJourney === index ? "text-[#6f6f6a]" : "text-[#aaa9a4]"}`}
+                      >
+                        {description}
+                      </span>
+                    </span>
+                    <HugeiconsIcon
+                      icon={ArrowRight01Icon}
+                      size={15}
+                      className={`mt-1 ${activeJourney === index ? "text-[#20201f]" : "text-[#c3c3bf]"}`}
+                    />
                   </button>
-                  <span className="text-[12px] text-white/45">or</span>
-                  <a
-                    href={repoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="pressable inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-5 py-3 text-[13px] font-medium text-white"
-                  >
-                    <GitHubMark className="h-4 w-4" />
-                    {copy.deploy}
-                    <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
-                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="contact"
+            className="scroll-mt-6 border-t border-black/[.08] py-24 sm:py-32"
+          >
+            <div className="grid gap-12 lg:grid-cols-[.78fr_1.22fr]">
+              <div>
+                <h2 className="max-w-[560px] text-[clamp(2.8rem,4.5vw,5rem)] font-semibold leading-[.94] tracking-[-.065em]">
+                  {copy.contactTitle}
+                </h2>
+                <p className="mt-6 max-w-md text-[14px] leading-6 text-[#6f6f6a]">
+                  {copy.contactBody}
+                </p>
+              </div>
+              <form
+                onSubmit={submitLead}
+                className="grid gap-4 rounded-[26px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.04),0_18px_55px_rgba(0,0,0,.055)] sm:grid-cols-2 sm:p-7"
+              >
+                <TextField
+                  label={copy.fields.company}
+                  value={lead.name}
+                  onChange={(value) => updateLead("name", value)}
+                  placeholder="Amazonik"
+                />
+                <label className="block">
+                  <span className="mb-2 block text-[12px] font-medium">
+                    {copy.fields.email}
+                  </span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => {
+                      clearInquiryError();
+                      setEmail(event.target.value);
+                    }}
+                    placeholder="you@company.com"
+                    className="h-12 w-full rounded-[14px] bg-[#f7f7f5] px-4 text-[13px] outline-none ring-[#ff7a35] placeholder:text-[#aaa9a5] focus:ring-2"
+                  />
+                </label>
+                <TextField
+                  label={copy.fields.size}
+                  value={lead.size}
+                  onChange={(value) => updateLead("size", value)}
+                  select
+                  selectOptions={translations[lang].onboarding.teamSizes}
+                />
+                <TextField
+                  wide
+                  label={copy.fields.does}
+                  value={lead.description}
+                  onChange={(value) => updateLead("description", value)}
+                  placeholder={
+                    translations[lang].onboarding.companyDescriptionPlaceholder
+                  }
+                />
+                <label className="block sm:col-span-2">
+                  <span className="mb-1.5 block text-[12px] font-medium">
+                    {copy.fields.bottlenecks}
+                  </span>
+                  <span className="mb-2 block text-[10px] text-[#8a8a85]">
+                    {copy.optional}
+                  </span>
+                  <textarea
+                    value={lead.bottlenecks}
+                    onChange={(event) =>
+                      updateLead("bottlenecks", event.target.value)
+                    }
+                    placeholder={
+                      translations[lang].onboarding.bottlenecksPlaceholder
+                    }
+                    rows={3}
+                    className="w-full resize-none rounded-[14px] bg-[#f7f7f5] px-4 py-3 text-[13px] leading-5 outline-none ring-[#ff7a35] placeholder:text-[#aaa9a5] focus:ring-2"
+                  />
+                </label>
+                <div className="flex flex-col items-end gap-3 sm:col-span-2">
+                  {inquiryState === "success" ? (
+                    <span className="inline-flex items-center gap-2 text-[13px] font-medium text-[#20201f]">
+                      <HugeiconsIcon icon={CheckIcon} size={16} />
+                      {copy.submitSuccess}
+                    </span>
+                  ) : (
+                    <>
+                      {inquiryState === "error" ? (
+                        <span className="inline-flex items-center gap-2 text-[12px] font-medium text-[#df6027]">
+                          <HugeiconsIcon icon={Cancel01Icon} size={14} />
+                          {copy.submitError}
+                        </span>
+                      ) : null}
+                      <Button
+                        type="submit"
+                        disabled={
+                          inquiryState === "submitting" ||
+                          !lead.name.trim() ||
+                          !lead.description.trim() ||
+                          !email.trim()
+                        }
+                      >
+                        {copy.submit}
+                        {inquiryState === "submitting" ? (
+                          <HugeiconsIcon
+                            icon={Loading01Icon}
+                            size={14}
+                            className="animate-spin"
+                          />
+                        ) : (
+                          <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </form>
+            </div>
+          </section>
+
+          <section className="rounded-[28px] bg-[#20201f] px-6 py-16 text-white sm:rounded-[36px] sm:px-12 sm:py-20 lg:px-20">
+            <div className="grid gap-10 lg:grid-cols-[1.2fr_.8fr]">
+              <h2 className="max-w-[760px] text-[clamp(2.6rem,4.5vw,5rem)] font-semibold leading-[.94] tracking-[-.065em]">
+                {copy.exampleTitle}
+              </h2>
+              <div>
+                <p className="max-w-md text-[13px] leading-6 text-white/60">
+                  {copy.exampleBody}
+                </p>
+                <div className="mt-8 flex flex-col items-start gap-5">
+                  <img
+                    src={amazonikLogo}
+                    alt="Amazonik"
+                    className="h-24 w-24 shrink-0 object-contain sm:h-28 sm:w-28"
+                  />
+                  <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+                    <button
+                      type="button"
+                      onClick={explore}
+                      className="pressable inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[13px] font-medium text-[#20201f]"
+                    >
+                      {copy.exampleButton}
+                      <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+                    </button>
+                    <span className="text-[12px] text-white/45">or</span>
+                    <a
+                      href={repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pressable inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/5 px-5 py-3 text-[13px] font-medium text-white"
+                    >
+                      <GitHubMark className="h-4 w-4" />
+                      {copy.deploy}
+                      <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
 
       <footer className="mx-auto flex w-full max-w-[1180px] flex-col gap-2 border-t border-black/[.08] py-10 text-[10px] text-[#8a8a85] sm:flex-row sm:items-center sm:justify-between">
@@ -2429,6 +2448,94 @@ function TextField({
   );
 }
 
+type SidebarAccount = {
+  name: string;
+  email: string;
+  avatar?: string;
+  onAvatarChange: (file: File) => void;
+  onReset: () => void;
+};
+
+function UserAccount({ account }: { account: SidebarAccount }) {
+  const details = useRef<HTMLDetailsElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const close = (event: PointerEvent) => {
+      if (
+        !details.current?.contains(
+          event.target instanceof Element ? event.target : null,
+        )
+      )
+        details.current?.removeAttribute("open");
+    };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, []);
+  return (
+    <details ref={details} className="group relative">
+      <summary className="pressable flex cursor-pointer list-none items-center gap-3 rounded-[13px] px-3 py-2.5 hover:bg-black/[.04] [&::-webkit-details-marker]:hidden">
+        {account.avatar ? (
+          <img
+            src={account.avatar}
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#ececea] text-[12px] font-semibold text-[#555550]">
+            {account.name.trim().charAt(0).toUpperCase() || "U"}
+          </span>
+        )}
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-[11px] font-medium">
+            {account.name}
+          </span>
+          <span className="mt-0.5 block truncate text-[9px] text-[#999994]">
+            {account.email}
+          </span>
+        </span>
+        <HugeiconsIcon
+          icon={MoreVerticalIcon}
+          size={14}
+          className="text-[#999994]"
+        />
+      </summary>
+      <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-full rounded-[16px] border border-black/[.06] bg-white p-1.5 shadow-[0_12px_35px_rgba(0,0,0,.12)]">
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) account.onAvatarChange(file);
+            event.target.value = "";
+            details.current?.removeAttribute("open");
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => input.current?.click()}
+          className="pressable flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-left text-[11px] font-medium hover:bg-black/[.04]"
+        >
+          <HugeiconsIcon icon={Camera01Icon} size={14} />
+          Change profile picture
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            details.current?.removeAttribute("open");
+            account.onReset();
+          }}
+          className="pressable flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-left text-[11px] font-medium text-red-600 hover:bg-red-50"
+        >
+          <HugeiconsIcon icon={Delete02Icon} size={14} />
+          Reset onboarding
+        </button>
+      </div>
+    </details>
+  );
+}
+
 function Sidebar({
   view,
   setView,
@@ -2441,6 +2548,7 @@ function Sidebar({
   reset,
   contact,
   isExample,
+  account,
 }: {
   view: View;
   setView: (v: View) => void;
@@ -2453,6 +2561,7 @@ function Sidebar({
   reset: () => void;
   contact: () => void;
   isExample?: boolean;
+  account?: SidebarAccount;
 }) {
   const { copy } = useLocale();
   const [routesOpen, setRoutesOpen] = useState(true);
@@ -2462,7 +2571,7 @@ function Sidebar({
       <div className="px-3">
         <Logo onClick={reset} />
       </div>
-      <nav className="mt-8 space-y-1">
+      <nav className="mt-8 space-y-3">
         <div>
           <div
             className={`flex h-10 items-center rounded-[11px] ${view === "Routes" ? "bg-black/[.065]" : "hover:bg-black/[.035]"}`}
@@ -2520,9 +2629,13 @@ function Sidebar({
               className={`pressable flex h-10 min-w-0 flex-1 items-center gap-3 rounded-[11px] px-3 text-[13px] transition ${view === "Opportunities" ? "font-medium" : "text-[#70706b]"}`}
             >
               <HugeiconsIcon icon={SparklesIcon} size={16} strokeWidth={1.7} />
-              <span className="truncate">{copy.nav.opportunities}</span>
-              <span className="text-[11px] text-[#999994]">
-                {opportunities.length}
+              <span className="flex min-w-0 items-baseline gap-3">
+                <span className="truncate">{copy.nav.opportunities}</span>
+                {opportunities.length > 0 && (
+                  <span className="text-[11px] text-[#999994]">
+                    {opportunities.length}
+                  </span>
+                )}
               </span>
             </button>
             <button
@@ -2569,15 +2682,19 @@ function Sidebar({
           {copy.nav.sources}
         </button>
       </nav>
-      {isExample && (
-        <div className="mt-auto px-3">
-          <WorkspaceAccount
-            name="Amazonik S.L."
-            subtitle="amazonik.es"
-            logoSrc={amazonikLogo}
-            logoAlt="Amazonik logo"
-            onContact={contact}
-          />
+      {(account || isExample) && (
+        <div className="mt-auto px-1">
+          {account ? (
+            <UserAccount account={account} />
+          ) : (
+            <WorkspaceAccount
+              name="Amazonik S.L."
+              subtitle="amazonik.es"
+              logoSrc={amazonikLogo}
+              logoAlt="Amazonik logo"
+              onContact={contact}
+            />
+          )}
         </div>
       )}
     </aside>
@@ -2627,24 +2744,155 @@ function OpportunityList({
   opportunities,
   creating,
   create,
+  addSource,
+  createManual,
 }: {
   opportunities: Opportunity[];
   creating: string | null;
   create: (o: Opportunity) => void;
+  addSource: () => void;
+  createManual: (title: string, description: string) => Promise<void>;
 }) {
   const { copy } = useLocale();
+  const [manualOpen, setManualOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [manualBusy, setManualBusy] = useState(false);
+  const [manualError, setManualError] = useState("");
+  const action = (
+    <Button onClick={() => setManualOpen(true)}>
+      <HugeiconsIcon icon={Add01Icon} size={14} />
+      {copy.opportunities.newOpportunity}
+    </Button>
+  );
+  const manualDialog = manualOpen && (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !manualBusy)
+          setManualOpen(false);
+      }}
+    >
+      <motion.form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-opportunity-title"
+        initial={{ opacity: 0, scale: 0.97, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={spring}
+        className="w-full max-w-[480px] rounded-[24px] bg-white p-6 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          setManualBusy(true);
+          setManualError("");
+          try {
+            await createManual(title.trim(), description.trim());
+            setTitle("");
+            setDescription("");
+            setManualOpen(false);
+          } catch (error) {
+            setManualError(
+              error instanceof Error
+                ? error.message
+                : "Could not create the opportunity.",
+            );
+          } finally {
+            setManualBusy(false);
+          }
+        }}
+      >
+        <h2
+          id="new-opportunity-title"
+          className="text-[21px] font-semibold tracking-[-.035em]"
+        >
+          {copy.opportunities.newOpportunityTitle}
+        </h2>
+        <label className="mt-6 block">
+          <span className="mb-2 block text-[12px] font-medium">
+            {copy.opportunities.titleLabel}
+          </span>
+          <input
+            autoFocus
+            required
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="h-12 w-full rounded-[14px] bg-[#f7f7f5] px-4 text-[13px] outline-none ring-[#ff7a35] focus:ring-2"
+          />
+        </label>
+        <label className="mt-4 block">
+          <span className="mb-2 block text-[12px] font-medium">
+            {copy.opportunities.descriptionLabel}
+          </span>
+          <textarea
+            required
+            rows={4}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className="w-full resize-none rounded-[14px] bg-[#f7f7f5] px-4 py-3 text-[13px] leading-5 outline-none ring-[#ff7a35] focus:ring-2"
+          />
+        </label>
+        {manualError && (
+          <p className="mt-3 text-[11px] text-red-600">{manualError}</p>
+        )}
+        <div className="mt-6 flex justify-end gap-2">
+          <Button
+            secondary
+            disabled={manualBusy}
+            onClick={() => setManualOpen(false)}
+          >
+            {copy.opportunities.cancel}
+          </Button>
+          <Button
+            type="submit"
+            disabled={manualBusy || !title.trim() || !description.trim()}
+          >
+            {manualBusy && (
+              <HugeiconsIcon
+                icon={Loading01Icon}
+                className="animate-spin"
+                size={13}
+              />
+            )}
+            {copy.opportunities.createOpportunity}
+          </Button>
+        </div>
+      </motion.form>
+    </div>
+  );
+  if (!opportunities.length)
+    return (
+      <div className="min-h-screen">
+        <ShellHeader title={copy.opportunities.title} action={action} />
+        <div className="grid h-[calc(100vh-82px)] place-items-center">
+          <div className="max-w-md text-center">
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-[18px] bg-white shadow-sm">
+              <HugeiconsIcon icon={Database01Icon} size={22} />
+            </span>
+            <h2 className="mt-6 text-[25px] font-semibold tracking-[-.04em]">
+              {copy.opportunities.emptyTitle}
+            </h2>
+            <p className="mt-2 text-[13px] leading-5 text-[#81817c]">
+              {copy.opportunities.emptyDescription}
+            </p>
+            <Button onClick={addSource} className="mt-6">
+              <HugeiconsIcon icon={Add01Icon} size={14} />
+              {copy.opportunities.addSource}
+            </Button>
+          </div>
+        </div>
+        {manualDialog}
+      </div>
+    );
   return (
     <div>
       <ShellHeader
         title={copy.opportunities.title}
         subtitle={copy.opportunities.subtitle}
+        action={action}
       />
       <div className="mx-auto max-w-[1120px] px-8 py-10 lg:px-10">
         <div className="mb-10">
-          <span className="text-[12px] font-medium text-[#e45e20]">
-            {copy.opportunities.tag}
-          </span>
-          <h2 className="mt-3 text-[38px] font-semibold tracking-[-.05em]">
+          <h2 className="text-[38px] font-semibold tracking-[-.05em]">
             {copy.opportunities.heading(opportunities.length)}
           </h2>
           <p className="mt-3 max-w-xl text-[14px] leading-6 text-[#777772]">
@@ -2785,6 +3033,7 @@ function OpportunityList({
           </section>
         </div>
       </div>
+      {manualDialog}
     </div>
   );
 }
@@ -2884,14 +3133,12 @@ function makeFlow(
     ],
   ];
   const labels = route.steps?.length
-    ? route.steps.map(
-        (step): [string, string, FlowData["kind"], string?] => [
-          step.label,
-          step.detail,
-          step.kind,
-          findIntegration(step.label, step.detail),
-        ],
-      )
+    ? route.steps.map((step): [string, string, FlowData["kind"], string?] => [
+        step.label,
+        step.detail,
+        step.kind,
+        findIntegration(step.label, step.detail),
+      ])
     : defaultSteps;
   if (route.steps?.length) {
     const nodes: Node<FlowData>[] = labels.map((item, index) => ({
@@ -2979,11 +3226,13 @@ function Routes({
   selectedId,
   setSelected,
   updateRoute,
+  showOpportunities,
 }: {
   routes: RouteData[];
   selectedId?: string;
   setSelected: (id?: string) => void;
   updateRoute: (route: RouteData) => void;
+  showOpportunities: () => void;
 }) {
   const { copy, lang } = useLocale();
   const selected = routes.find((r) => r.id === selectedId);
@@ -3220,6 +3469,10 @@ function Routes({
             <p className="mt-2 text-[13px] leading-5 text-[#81817c]">
               {copy.routes.emptyDescription}
             </p>
+            <Button onClick={showOpportunities} className="mt-6">
+              {copy.routes.viewOpportunities}
+              <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
+            </Button>
           </div>
         </div>
       </div>
@@ -3297,10 +3550,7 @@ function Routes({
                 >
                   <HugeiconsIcon icon={Cancel01Icon} size={15} />
                 </button>
-                <span className="text-[10px] font-semibold uppercase tracking-[.12em] text-[#999994]">
-                  {copy.flow.nodeKinds[inspected.data.kind]}
-                </span>
-                <h3 className="mt-3 text-[20px] font-semibold tracking-[-.035em]">
+                <h3 className="text-[20px] font-semibold tracking-[-.035em]">
                   {inspected.data.label}
                 </h3>
                 <p className="mt-2 text-[12px] text-[#858580]">
@@ -3507,7 +3757,7 @@ function Routes({
                   </div>
                 </div>
                 <div className="mt-6">
-                  <div className="text-[9px] font-semibold uppercase tracking-[.12em] text-[#999994]">
+                  <div className="text-[11px] font-medium text-[#777772]">
                     {executionCopy.summary}
                   </div>
                   <div className="mt-2 rounded-[16px] bg-[#edf6ef] p-4 text-[11px] font-medium text-[#396c47]">
@@ -3515,7 +3765,7 @@ function Routes({
                   </div>
                 </div>
                 <div className="mt-6">
-                  <div className="text-[9px] font-semibold uppercase tracking-[.12em] text-[#999994]">
+                  <div className="text-[11px] font-medium text-[#777772]">
                     {executionCopy.steps}
                   </div>
                   <div className="mt-3 space-y-3">
@@ -3603,10 +3853,7 @@ function ReviewSheet({ continueRoute }: { continueRoute: () => void }) {
         transition={spring}
         className="w-full max-w-[430px] rounded-[28px] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,.18)]"
       >
-        <span className="text-[11px] font-medium text-[#e45e20]">
-          {copy.review.tag}
-        </span>
-        <h3 className="mt-2 text-[23px] font-semibold tracking-[-.04em]">
+        <h3 className="text-[23px] font-semibold tracking-[-.04em]">
           {copy.review.title}
         </h3>
         <p className="mt-2 text-[12px] leading-5 text-[#777772]">
@@ -3631,9 +3878,7 @@ function ReviewSheet({ continueRoute }: { continueRoute: () => void }) {
                   />
                 )}
               </span>
-              <span className="font-mono text-[11px] font-semibold">
-                {item[0]}
-              </span>
+              <span className="text-[11px] font-semibold">{item[0]}</span>
               <span className="ml-auto text-[12px] font-semibold">
                 {item[1]}
               </span>
@@ -3651,22 +3896,35 @@ function ReviewSheet({ continueRoute }: { continueRoute: () => void }) {
 
 function Sources({
   company,
+  profileType = "company",
   files,
   integrations,
-  onUpdateCompany,
+  onGenerate,
+  generating = false,
+  onUpdateProfile,
   onUpdateFiles,
   onUpdateIntegrations,
 }: {
   company: Company;
+  profileType?: "company" | "personal";
   files: SourceFile[];
   integrations: string[];
-  onUpdateCompany: (company: Company) => void;
+  onGenerate?: () => void;
+  generating?: boolean;
+  onUpdateProfile: (
+    company: Company,
+    profileType: "company" | "personal",
+  ) => void;
   onUpdateFiles: (files: SourceFile[]) => void;
-  onUpdateIntegrations: (integrations: string[]) => void;
+  onUpdateIntegrations: (integrations: string[]) => void | Promise<void>;
 }) {
   const { copy } = useLocale();
   const [editingProfile, setEditingProfile] = useState(false);
   const [draftCompany, setDraftCompany] = useState(company);
+  const [draftProfileType, setDraftProfileType] = useState(profileType);
+  const [pendingDisconnect, setPendingDisconnect] = useState<string>();
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const field = (key: keyof Company, value: string) =>
     setDraftCompany((c) => ({ ...c, [key]: value }));
@@ -3685,24 +3943,69 @@ function Sources({
   };
   const connect = (name: string) => {
     if (integrations.includes(name)) {
-      onUpdateIntegrations(integrations.filter((x) => x !== name));
+      setDisconnectError("");
+      setPendingDisconnect(name);
       return;
     }
     onUpdateIntegrations([...integrations, name]);
   };
+  const disconnect = async () => {
+    if (!pendingDisconnect) return;
+    setDisconnecting(true);
+    try {
+      await onUpdateIntegrations(
+        integrations.filter((name) => name !== pendingDisconnect),
+      );
+      setPendingDisconnect(undefined);
+    } catch (error) {
+      setDisconnectError(
+        error instanceof Error
+          ? error.message
+          : `Could not disconnect ${pendingDisconnect}.`,
+      );
+    } finally {
+      setDisconnecting(false);
+    }
+  };
   const startEditProfile = () => {
     setDraftCompany(company);
+    setDraftProfileType(profileType);
     setEditingProfile(true);
   };
   const saveProfile = () => {
-    onUpdateCompany(draftCompany);
+    onUpdateProfile(draftCompany, draftProfileType);
     setEditingProfile(false);
   };
+  const hasSources = files.length > 0 || integrations.length > 0;
   return (
     <div>
       <ShellHeader
         title={copy.sources.title}
         subtitle={copy.sources.subtitle}
+        action={
+          <span className="group relative inline-flex">
+            <Button disabled={!hasSources || generating} onClick={onGenerate}>
+              {generating ? (
+                <HugeiconsIcon
+                  icon={Loading01Icon}
+                  className="animate-spin"
+                  size={13}
+                />
+              ) : (
+                <HugeiconsIcon icon={SparklesIcon} size={13} />
+              )}
+              Generate opportunities
+            </Button>
+            {!hasSources && (
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-[calc(100%+10px)] z-30 w-60 origin-top-right rounded-xl bg-[#20201f] px-3 py-2 text-center text-[11px] font-medium leading-4 text-white opacity-0 shadow-[0_10px_30px_rgba(0,0,0,.22)] transition-opacity duration-100 group-hover:opacity-100 group-focus-within:opacity-100"
+              >
+                Connect a source first to generate opportunities.
+              </span>
+            )}
+          </span>
+        }
       />
       <div className="mx-auto max-w-[920px] p-10">
         <section>
@@ -3747,7 +4050,9 @@ function Sources({
         </section>
         <section className="mt-10">
           <h2 className="text-[13px] font-semibold">
-            {copy.sources.companyKnowledge}
+            {profileType === "personal"
+              ? "Personal knowledge"
+              : copy.sources.companyKnowledge}
           </h2>
           <input
             ref={input}
@@ -3802,7 +4107,9 @@ function Sources({
               ))
             ) : (
               <div className="rounded-[18px] bg-white p-6 text-[11px] text-[#888883]">
-                {copy.sources.noDocuments}
+                {profileType === "personal"
+                  ? "No documents uploaded. Heighliner is using your profile description."
+                  : copy.sources.noDocuments}
               </div>
             )}
           </div>
@@ -3810,7 +4117,11 @@ function Sources({
         <section className="mt-10 rounded-[22px] bg-white p-6">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-[13px] font-semibold">
-              {editingProfile ? copy.onboarding.companyName : company.name}
+              {editingProfile
+                ? draftProfileType === "personal"
+                  ? "Your profile"
+                  : copy.onboarding.companyName
+                : company.name}
             </h2>
             {!editingProfile ? (
               <Button secondary onClick={startEditProfile}>
@@ -3834,75 +4145,859 @@ function Sources({
             )}
           </div>
           {editingProfile ? (
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <TextField
-                label={copy.onboarding.companyName}
-                value={draftCompany.name}
-                onChange={(v) => field("name", v)}
-                placeholder={copy.onboarding.companyPlaceholder}
-              />
-              <TextField
-                label={copy.onboarding.teamSize}
-                value={draftCompany.size}
-                onChange={(v) => field("size", v)}
-                select
-                selectOptions={copy.onboarding.teamSizes}
-              />
-              <TextField
-                wide
-                label={copy.onboarding.companyDoes}
-                value={draftCompany.description}
-                onChange={(v) => field("description", v)}
-                placeholder={copy.onboarding.companyDescriptionPlaceholder}
-              />
-              <TextField
-                label={copy.onboarding.departments}
-                value={draftCompany.departments}
-                onChange={(v) => field("departments", v)}
-                placeholder={copy.onboarding.departmentsPlaceholder}
-              />
-              <TextField
-                label={copy.onboarding.processes}
-                value={draftCompany.processes}
-                onChange={(v) => field("processes", v)}
-                placeholder={copy.onboarding.processesPlaceholder}
-              />
-              <TextField
-                wide
-                label={copy.onboarding.bottlenecks}
-                value={draftCompany.bottlenecks}
-                onChange={(v) => field("bottlenecks", v)}
-                placeholder={copy.onboarding.bottlenecksPlaceholder}
-              />
+            <div className="mt-5">
+              <div className="mb-5 inline-flex items-center gap-1 rounded-[11px] bg-black/[.035] p-1">
+                {(["company", "personal"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setDraftProfileType(type)}
+                    className={`pressable min-w-[92px] rounded-[8px] px-3 py-2 text-[11px] font-medium capitalize ${draftProfileType === type ? "bg-white shadow-sm" : "text-[#777772]"}`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextField
+                  label={
+                    draftProfileType === "personal"
+                      ? "Your name"
+                      : copy.onboarding.companyName
+                  }
+                  value={draftCompany.name}
+                  onChange={(v) => field("name", v)}
+                  placeholder={
+                    draftProfileType === "personal"
+                      ? "Your name"
+                      : copy.onboarding.companyPlaceholder
+                  }
+                />
+                {draftProfileType === "company" && (
+                  <>
+                    <TextField
+                      label={copy.onboarding.teamSize}
+                      value={draftCompany.size}
+                      onChange={(v) => field("size", v)}
+                      select
+                      selectOptions={copy.onboarding.teamSizes}
+                    />
+                    <TextField
+                      wide
+                      label={copy.onboarding.companyDoes}
+                      value={draftCompany.description}
+                      onChange={(v) => field("description", v)}
+                      placeholder={
+                        copy.onboarding.companyDescriptionPlaceholder
+                      }
+                    />
+                    <TextField
+                      label={copy.onboarding.departments}
+                      value={draftCompany.departments}
+                      onChange={(v) => field("departments", v)}
+                      placeholder={copy.onboarding.departmentsPlaceholder}
+                    />
+                    <TextField
+                      label={copy.onboarding.processes}
+                      value={draftCompany.processes}
+                      onChange={(v) => field("processes", v)}
+                      placeholder={copy.onboarding.processesPlaceholder}
+                    />
+                    <TextField
+                      wide
+                      label={copy.onboarding.bottlenecks}
+                      value={draftCompany.bottlenecks}
+                      onChange={(v) => field("bottlenecks", v)}
+                      placeholder={copy.onboarding.bottlenecksPlaceholder}
+                    />
+                  </>
+                )}
+                {draftProfileType === "personal" && (
+                  <TextField
+                    wide
+                    label="About your work"
+                    value={draftCompany.description}
+                    onChange={(v) => field("description", v)}
+                    placeholder="What kind of work do you want to improve?"
+                  />
+                )}
+              </div>
             </div>
           ) : (
             <>
               <p className="mt-2 text-[12px] leading-5 text-[#777772]">
                 {company.description}
               </p>
-              <div className="mt-5 grid grid-cols-2 gap-5 text-[10px]">
-                <div>
-                  <span className="block text-[#999994]">
-                    {copy.sources.departments}
-                  </span>
-                  <span className="mt-1 block font-medium">
-                    {company.departments || copy.sources.notProvided}
-                  </span>
+              {profileType === "company" && (
+                <div className="mt-5 grid grid-cols-2 gap-5 text-[10px]">
+                  <div>
+                    <span className="block text-[#999994]">
+                      {copy.sources.departments}
+                    </span>
+                    <span className="mt-1 block font-medium">
+                      {company.departments || copy.sources.notProvided}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[#999994]">
+                      {copy.sources.bottlenecks}
+                    </span>
+                    <span className="mt-1 block font-medium">
+                      {company.bottlenecks || copy.sources.notProvided}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="block text-[#999994]">
-                    {copy.sources.bottlenecks}
-                  </span>
-                  <span className="mt-1 block font-medium">
-                    {company.bottlenecks || copy.sources.notProvided}
-                  </span>
-                </div>
-              </div>
+              )}
             </>
           )}
         </section>
       </div>
+      {pendingDisconnect && (
+        <div
+          className="fixed inset-0 z-[60] grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !disconnecting)
+              setPendingDisconnect(undefined);
+          }}
+        >
+          <motion.section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="disconnect-title"
+            aria-describedby="disconnect-description"
+            initial={{ opacity: 0, scale: 0.97, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={spring}
+            className="w-full max-w-[420px] rounded-[24px] bg-white p-6 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+          >
+            <h2
+              id="disconnect-title"
+              className="text-[21px] font-semibold tracking-[-.035em]"
+            >
+              Disconnect {pendingDisconnect}?
+            </h2>
+            <p
+              id="disconnect-description"
+              className="mt-2 text-[12px] leading-5 text-[#777772]"
+            >
+              Heighliner will lose access to this account and remove its
+              imported source data. You can reconnect it later.
+            </p>
+            {disconnectError && (
+              <p className="mt-3 text-[11px] text-red-600">{disconnectError}</p>
+            )}
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                secondary
+                disabled={disconnecting}
+                onClick={() => setPendingDisconnect(undefined)}
+              >
+                Cancel
+              </Button>
+              <button
+                type="button"
+                disabled={disconnecting}
+                onClick={() => void disconnect()}
+                className="pressable inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-[13px] font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {disconnecting && (
+                  <HugeiconsIcon
+                    icon={Loading01Icon}
+                    className="animate-spin"
+                    size={13}
+                  />
+                )}
+                Disconnect
+              </button>
+            </div>
+          </motion.section>
+        </div>
+      )}
     </div>
+  );
+}
+
+type LocalWorkspaceResponse = {
+  user: { email: string; avatar: string | null };
+  workspace: {
+    name: string;
+    description: string;
+    profileType: "company" | "personal";
+  } | null;
+  sources: { id: number; name: string; kind: string }[];
+  opportunities: {
+    id: number;
+    title: string;
+    description: string;
+    status: string;
+  }[];
+  routes: { id: number; title: string; description: string }[];
+};
+
+export function LocalDashboard() {
+  const [ready, setReady] = useState(false);
+  const [view, setView] = useState<View>("Sources");
+  const [workspace, setWorkspace] = useState<LocalWorkspaceResponse | null>(
+    null,
+  );
+  const [profileType, setProfileType] = useState<"company" | "personal">(
+    "company",
+  );
+  const [profileName, setProfileName] = useState("");
+  const [setupStep, setSetupStep] = useState(0);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [busy, setBusy] = useState("");
+  const [error, setError] = useState("");
+  const [selected, setSelected] = useState<string>();
+  const [avatar, setAvatar] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+
+  const load = async (initialize = false) => {
+    const response = await fetch("/api/workspace");
+    if (!response.ok) return;
+    const data = (await response.json()) as LocalWorkspaceResponse;
+    const legacyAvatar = initialize
+      ? localStorage.getItem("heighliner-avatar")
+      : null;
+    if (!data.user.avatar && legacyAvatar) {
+      const migration = await fetch("/api/workspace", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: legacyAvatar }),
+      });
+      if (migration.ok) {
+        data.user.avatar = legacyAvatar;
+        localStorage.removeItem("heighliner-avatar");
+      }
+    }
+    setWorkspace(data);
+    setAvatar(data.user.avatar || "");
+    if (data.workspace) {
+      setProfileName(data.workspace.name);
+      setProfileType(data.workspace.profileType);
+    }
+    if (!data.workspace) setSetupStep(0);
+    else if (!data.opportunities.length) setSetupStep(1);
+    else setSetupStep(2);
+    if (initialize) setSetupOpen(!data.workspace);
+  };
+
+  useEffect(() => {
+    void (async () => {
+      await fetch("/api/auth/local", { method: "POST" });
+      await load(true);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("source") === "gmail") {
+        setBusy("gmail");
+        const response = await fetch("/api/integrations/gmail", {
+          method: "POST",
+        });
+        const result = await response.json();
+        setBusy("");
+        if (!response.ok)
+          setError(result.error || "Could not finish connecting Gmail.");
+        await load();
+        history.replaceState(null, "", "/app");
+      }
+      setReady(true);
+    })();
+  }, []);
+
+  const company: Company = {
+    ...companyDefaults,
+    name: workspace?.workspace?.name || profileName || "Your workspace",
+    description:
+      workspace?.workspace?.description ||
+      (profileType === "company" ? "Company workspace" : "Personal workspace"),
+  };
+  const files: SourceFile[] = (workspace?.sources || [])
+    .filter((source) => source.kind !== "gmail")
+    .map((source) => ({ name: source.name, size: 0, type: source.kind }));
+  const integrations = (workspace?.sources || []).some(
+    (source) => source.kind === "gmail",
+  )
+    ? ["Gmail"]
+    : [];
+  const opportunities: Opportunity[] = (workspace?.opportunities || []).map(
+    (item, index) => ({
+      id: String(item.id),
+      title: item.title,
+      description: item.description,
+      evidence: "Found in your connected sources",
+      hours: Math.max(2, 8 - index),
+      impact: index < 3 ? "High" : "Medium",
+      effort: index < 2 ? "Low" : "Medium",
+      confidence: 94 - index * 3,
+      systems: integrations.length
+        ? ["Gmail", "Company knowledge"]
+        : ["Company knowledge"],
+    }),
+  );
+  const routes: RouteData[] = (workspace?.routes || []).map((item) => ({
+    id: String(item.id),
+    title: item.title,
+    description: item.description,
+    hours: 4,
+    systems: integrations.length
+      ? ["Gmail", "Company knowledge"]
+      : ["Company knowledge"],
+    createdAt: item.id,
+  }));
+
+  const saveProfile = async () => {
+    if (!profileName.trim()) return;
+    setBusy("profile");
+    setError("");
+    const response = await fetch("/api/workspace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: profileName,
+        profileType,
+        description:
+          profileType === "company"
+            ? `${profileName} company workspace`
+            : `${profileName}'s personal workspace`,
+      }),
+    });
+    setBusy("");
+    if (!response.ok) return setError("Could not save the workspace.");
+    await load();
+    setSetupStep(1);
+    setView("Sources");
+  };
+  const saveProfileFromSources = async (
+    nextCompany: Company,
+    nextType: "company" | "personal",
+  ) => {
+    setBusy("profile");
+    setError("");
+    const response = await fetch("/api/workspace", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: nextCompany.name,
+        description: nextCompany.description,
+        profileType: nextType,
+      }),
+    });
+    setBusy("");
+    if (!response.ok) return setError("Could not save the profile.");
+    setProfileName(nextCompany.name);
+    setProfileType(nextType);
+    await load();
+  };
+  const changeAvatar = (file: File) => {
+    if (!file.type.startsWith("image/") || file.size > 2 * 1024 * 1024)
+      return setError("Choose an image smaller than 2 MB.");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const next = String(reader.result || "");
+      void (async () => {
+        setBusy("avatar");
+        setError("");
+        const response = await fetch("/api/workspace", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avatar: next }),
+        });
+        setBusy("");
+        if (!response.ok) {
+          const result = await response.json();
+          setError(result.error || "That image could not be saved.");
+          return;
+        }
+        setAvatar(next);
+      })();
+    };
+    reader.readAsDataURL(file);
+  };
+  const resetOnboarding = async () => {
+    setBusy("reset");
+    setError("");
+    const response = await fetch("/api/workspace", { method: "DELETE" });
+    setBusy("");
+    if (!response.ok) return setError("Could not reset your local data.");
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("heighliner-"))
+      .forEach((key) => localStorage.removeItem(key));
+    setAvatar("");
+    setProfileName("");
+    setProfileType("company");
+    setSelected(undefined);
+    setView("Sources");
+    setSetupStep(0);
+    setResetOpen(false);
+    await load();
+    setSetupOpen(true);
+  };
+  const connectGmail = async () => {
+    setBusy("gmail");
+    setError("");
+    const response = await fetch("/api/integrations/gmail", { method: "POST" });
+    const result = await response.json();
+    setBusy("");
+    if (!response.ok)
+      return setError(result.error || "Could not connect Gmail.");
+    if (result.redirectUrl) return window.location.assign(result.redirectUrl);
+    await load();
+  };
+  const disconnectGmail = async () => {
+    setBusy("gmail");
+    setError("");
+    const response = await fetch("/api/integrations/gmail", {
+      method: "DELETE",
+    });
+    const result = await response.json();
+    setBusy("");
+    if (!response.ok) {
+      setError(result.error || "Could not disconnect Gmail.");
+      throw new Error(result.error || "Could not disconnect Gmail.");
+    }
+    await load();
+  };
+  const uploadFiles = async (list: FileList | null) => {
+    if (!list?.length) return;
+    setBusy("files");
+    setError("");
+    for (const file of Array.from(list)) {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/sources", { method: "POST", body });
+      if (!response.ok) {
+        setError((await response.json()).error || "Could not add a file.");
+        break;
+      }
+    }
+    setBusy("");
+    await load();
+  };
+  const generate = async () => {
+    setBusy("generate");
+    setError("");
+    const response = await fetch("/api/opportunities/generate", {
+      method: "POST",
+    });
+    setBusy("");
+    if (!response.ok)
+      return setError(
+        (await response.json()).error || "Could not generate opportunities.",
+      );
+    await load();
+    setSetupStep(2);
+    setView("Opportunities");
+  };
+  const createRoute = async (opportunity: Opportunity) => {
+    setBusy(`route-${opportunity.id}`);
+    setError("");
+    const response = await fetch(`/api/opportunities/${opportunity.id}/route`, {
+      method: "POST",
+    });
+    const result = await response.json();
+    setBusy("");
+    if (!response.ok)
+      return setError(result.error || "Could not create the route.");
+    await load();
+    setSetupOpen(false);
+    setView("Routes");
+    setSelected(undefined);
+  };
+  const createManualOpportunity = async (
+    title: string,
+    description: string,
+  ) => {
+    const response = await fetch("/api/opportunities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description }),
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || "Could not create the opportunity.");
+    }
+    await load();
+  };
+
+  if (!ready || !workspace)
+    return <div className="min-h-screen bg-[#f7f7f5]" />;
+  return (
+    <LocaleContext.Provider
+      value={{ lang: "en", setLang: () => {}, copy: translations.en }}
+    >
+      <div className="min-h-screen bg-[#f7f7f5]">
+        <Sidebar
+          view={view}
+          setView={setView}
+          routes={routes}
+          selected={selected}
+          selectRoute={(id) => {
+            setSelected(id);
+            setView("Routes");
+          }}
+          showRoutes={() => {
+            setSelected(undefined);
+            setView("Routes");
+          }}
+          opportunities={opportunities}
+          selectOpportunity={(id) => {
+            setView("Opportunities");
+            setTimeout(
+              () =>
+                document
+                  .getElementById(`opportunity-${id}`)
+                  ?.scrollIntoView({ behavior: "smooth" }),
+              50,
+            );
+          }}
+          reset={() => setView("Routes")}
+          contact={() => {}}
+          account={{
+            name: workspace.workspace?.name || profileName || "Your profile",
+            email: workspace.user.email,
+            avatar,
+            onAvatarChange: changeAvatar,
+            onReset: () => setResetOpen(true),
+          }}
+        />
+        <main className="ml-[250px] min-h-screen">
+          {view === "Routes" && (
+            <Routes
+              routes={routes}
+              selectedId={selected}
+              setSelected={setSelected}
+              updateRoute={() => {}}
+              showOpportunities={() => setView("Opportunities")}
+            />
+          )}
+          {view === "Opportunities" && (
+            <OpportunityList
+              opportunities={opportunities}
+              creating={busy.startsWith("route-") ? busy.slice(6) : null}
+              create={createRoute}
+              addSource={() => setView("Sources")}
+              createManual={createManualOpportunity}
+            />
+          )}
+          {view === "Sources" && (
+            <Sources
+              company={company}
+              profileType={profileType}
+              files={files}
+              integrations={integrations}
+              onGenerate={() => void generate()}
+              generating={busy === "generate"}
+              onUpdateProfile={(next, nextType) =>
+                void saveProfileFromSources(next, nextType)
+              }
+              onUpdateFiles={() => {}}
+              onUpdateIntegrations={async (next) => {
+                if (next.includes("Gmail") && !integrations.includes("Gmail"))
+                  await connectGmail();
+                if (!next.includes("Gmail") && integrations.includes("Gmail"))
+                  await disconnectGmail();
+              }}
+            />
+          )}
+        </main>
+        {setupOpen && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]">
+            <motion.section
+              role="dialog"
+              aria-modal="true"
+              aria-label="Set up Heighliner"
+              initial={{ opacity: 0, scale: 0.97, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={spring}
+              className="w-full max-w-[720px] rounded-[28px] bg-white p-7 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+            >
+              <div className="flex items-center justify-between">
+                <Logo />
+                <span className="text-[10px] font-medium text-[#999994]">
+                  {setupStep + 1} of 3
+                </span>
+              </div>
+              <div className="mt-5 flex gap-1.5">
+                {[0, 1, 2].map((step) => (
+                  <span
+                    key={step}
+                    className={`h-1 flex-1 rounded-full ${step <= setupStep ? "bg-[#ff7a35]" : "bg-black/[.07]"}`}
+                  />
+                ))}
+              </div>
+              {setupStep === 0 && (
+                <div className="mt-8">
+                  <h1 className="text-[30px] font-semibold tracking-[-.045em]">
+                    Who is Heighliner working for?
+                  </h1>
+                  <p className="mt-2 text-[12px] leading-5 text-[#777772]">
+                    This helps tailor the opportunities we find.
+                  </p>
+                  <div className="mt-6 inline-flex items-center gap-1 rounded-[11px] bg-black/[.035] p-1">
+                    {(["company", "personal"] as const).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setProfileType(type)}
+                        className={`pressable min-w-[92px] rounded-[8px] px-3 py-2 text-[11px] font-medium capitalize ${profileType === type ? "bg-white shadow-sm" : "text-[#777772]"}`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="mt-5 block">
+                    <span className="mb-2 block text-[12px] font-medium">
+                      {profileType === "company" ? "Company name" : "Your name"}
+                    </span>
+                    <input
+                      autoFocus
+                      value={profileName}
+                      onChange={(event) => setProfileName(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") void saveProfile();
+                      }}
+                      placeholder={
+                        profileType === "company" ? "Acme Inc." : "Your name"
+                      }
+                      className="h-12 w-full rounded-[14px] bg-[#f7f7f5] px-4 text-[13px] outline-none ring-[#ff7a35] focus:ring-2"
+                    />
+                  </label>
+                  <Button
+                    disabled={!profileName.trim() || busy === "profile"}
+                    onClick={saveProfile}
+                    className="mt-6 w-full"
+                  >
+                    Continue <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
+                  </Button>
+                </div>
+              )}
+              {setupStep === 1 && (
+                <div className="mt-8">
+                  <h1 className="text-[30px] font-semibold tracking-[-.045em]">
+                    Where does your work happen?
+                  </h1>
+                  <p className="mt-2 text-[12px] leading-5 text-[#777772]">
+                    Connect one or more sources. Heighliner uses them as
+                    context.
+                  </p>
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <button
+                      onClick={connectGmail}
+                      disabled={
+                        busy === "gmail" || integrations.includes("Gmail")
+                      }
+                      className={`pressable flex items-center gap-3 rounded-[18px] p-4 text-left ${integrations.includes("Gmail") ? "bg-[#232321] text-white" : "bg-[#f7f7f5]"}`}
+                    >
+                      <SystemMark name="Gmail" />
+                      <div className="flex-1">
+                        <div className="text-[12px] font-medium">Gmail</div>
+                        <div
+                          className={`mt-1 text-[9px] ${integrations.includes("Gmail") ? "text-white/65" : "text-[#92928d]"}`}
+                        >
+                          {integrations.includes("Gmail")
+                            ? "Connected"
+                            : busy === "gmail"
+                              ? "Connecting…"
+                              : "Connect with Composio"}
+                        </div>
+                      </div>
+                      {integrations.includes("Gmail") ? (
+                        <HugeiconsIcon
+                          icon={CheckmarkCircle02Icon}
+                          className="text-[#75cb8a]"
+                          size={16}
+                        />
+                      ) : (
+                        <HugeiconsIcon icon={Add01Icon} size={14} />
+                      )}
+                    </button>
+                    <label className="pressable flex cursor-pointer items-center gap-3 rounded-[18px] bg-[#f7f7f5] p-4">
+                      <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-white">
+                        <HugeiconsIcon icon={Upload01Icon} size={16} />
+                      </span>
+                      <div className="flex-1">
+                        <div className="text-[12px] font-medium">Files</div>
+                        <div className="mt-1 text-[9px] text-[#92928d]">
+                          {busy === "files"
+                            ? "Uploading…"
+                            : `${files.length} added · PDF, CSV, documents`}
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(event) =>
+                          void uploadFiles(event.target.files)
+                        }
+                      />
+                    </label>
+                  </div>
+                  {files.length > 0 && (
+                    <div className="mt-5 space-y-2">
+                      {files.map((file) => (
+                        <div
+                          key={file.name}
+                          className="flex items-center gap-2 rounded-[12px] bg-[#edf6ef] px-3 py-2 text-[10px] font-medium text-[#3f7b50]"
+                        >
+                          <HugeiconsIcon icon={CheckIcon} size={12} />
+                          {file.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-7 flex items-center gap-2">
+                    <Button secondary onClick={() => setSetupStep(0)}>
+                      Back
+                    </Button>
+                    <button
+                      onClick={() => {
+                        setSetupOpen(false);
+                        setView("Sources");
+                      }}
+                      className="pressable px-3 py-2 text-[11px] font-medium text-[#777772]"
+                    >
+                      Set up later
+                    </button>
+                    <Button
+                      disabled={
+                        (!integrations.length && !files.length) ||
+                        busy === "generate"
+                      }
+                      onClick={generate}
+                      className="ml-auto"
+                    >
+                      {busy === "generate" ? (
+                        <HugeiconsIcon
+                          icon={Loading01Icon}
+                          className="animate-spin"
+                          size={13}
+                        />
+                      ) : (
+                        <HugeiconsIcon icon={SparklesIcon} size={13} />
+                      )}{" "}
+                      Generate opportunities
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {setupStep === 2 && (
+                <div className="mt-8">
+                  <h1 className="text-[30px] font-semibold tracking-[-.045em]">
+                    Choose what to automate first.
+                  </h1>
+                  <p className="mt-2 text-[12px] leading-5 text-[#777772]">
+                    Create one or more routes. We’ll take you to Routes as soon
+                    as the first one is ready.
+                  </p>
+                  <div className="mt-6 max-h-[390px] space-y-2 overflow-y-auto pr-1">
+                    {opportunities.map((opportunity, index) => (
+                      <article
+                        key={opportunity.id}
+                        className="rounded-[18px] bg-[#f7f7f5] p-4"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-[13px] font-semibold">
+                                {opportunity.title}
+                              </h3>
+                              {index === 0 && (
+                                <span className="rounded-full bg-[#fff0e8] px-2 py-1 text-[8px] font-semibold text-[#c84f1b]">
+                                  Recommended
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1.5 text-[10px] leading-4 text-[#777772]">
+                              {opportunity.description}
+                            </p>
+                          </div>
+                          <Button
+                            disabled={busy === `route-${opportunity.id}`}
+                            onClick={() => createRoute(opportunity)}
+                            className="shrink-0"
+                          >
+                            {busy === `route-${opportunity.id}` ? (
+                              <HugeiconsIcon
+                                icon={Loading01Icon}
+                                className="animate-spin"
+                                size={13}
+                              />
+                            ) : (
+                              <HugeiconsIcon icon={Add01Icon} size={13} />
+                            )}{" "}
+                            Create route
+                          </Button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {error && (
+                <p className="mt-4 text-[11px] text-red-600">{error}</p>
+              )}
+            </motion.section>
+          </div>
+        )}
+        {resetOpen && (
+          <div
+            className="fixed inset-0 z-[60] grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget && busy !== "reset")
+                setResetOpen(false);
+            }}
+          >
+            <motion.section
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="reset-title"
+              aria-describedby="reset-description"
+              initial={{ opacity: 0, scale: 0.97, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={spring}
+              className="w-full max-w-[420px] rounded-[24px] bg-white p-6 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+            >
+              <h2
+                id="reset-title"
+                className="text-[21px] font-semibold tracking-[-.035em]"
+              >
+                Reset onboarding?
+              </h2>
+              <p
+                id="reset-description"
+                className="mt-2 text-[12px] leading-5 text-[#777772]"
+              >
+                Your profile, connected sources, uploaded files, opportunities,
+                and routes will be permanently deleted from this device.
+              </p>
+              <div className="mt-6 flex justify-end gap-2">
+                <Button
+                  secondary
+                  disabled={busy === "reset"}
+                  onClick={() => setResetOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <button
+                  type="button"
+                  disabled={busy === "reset"}
+                  onClick={() => void resetOnboarding()}
+                  className="pressable inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-[13px] font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {busy === "reset" && (
+                    <HugeiconsIcon
+                      icon={Loading01Icon}
+                      className="animate-spin"
+                      size={13}
+                    />
+                  )}{" "}
+                  Reset everything
+                </button>
+              </div>
+            </motion.section>
+          </div>
+        )}
+      </div>
+    </LocaleContext.Provider>
   );
 }
 
@@ -4018,6 +5113,25 @@ export default function Home() {
       persist({ company, files, integrations, opportunities, routes: next });
     }, 650);
   };
+  const createManualOpportunity = async (
+    title: string,
+    description: string,
+  ) => {
+    const opportunity: Opportunity = {
+      id: `opportunity-${Date.now()}`,
+      title,
+      description,
+      evidence: "Added manually",
+      hours: 4,
+      impact: "Medium",
+      effort: "Medium",
+      confidence: 100,
+      systems: integrations.length ? integrations : ["Company knowledge"],
+    };
+    const next = [opportunity, ...opportunities];
+    setOpportunities(next);
+    persist({ company, files, integrations, opportunities: next, routes });
+  };
   const exploreExample = () => {
     setCompany(exampleCompany);
     setFiles(exampleFiles);
@@ -4097,6 +5211,7 @@ export default function Home() {
                       routes: next,
                     });
                   }}
+                  showOpportunities={() => setView("Opportunities")}
                 />
               )}
               {view === "Opportunities" && (
@@ -4104,6 +5219,8 @@ export default function Home() {
                   opportunities={opportunities}
                   creating={creating}
                   create={createRoute}
+                  addSource={() => setView("Sources")}
+                  createManual={createManualOpportunity}
                 />
               )}
               {view === "Sources" && (
@@ -4111,7 +5228,8 @@ export default function Home() {
                   company={company}
                   files={files}
                   integrations={integrations}
-                  onUpdateCompany={(next) => updateWorkspace({ company: next })}
+                  onGenerate={() => void complete(company, files, integrations)}
+                  onUpdateProfile={(next) => updateWorkspace({ company: next })}
                   onUpdateFiles={(next) => updateWorkspace({ files: next })}
                   onUpdateIntegrations={(next) =>
                     updateWorkspace({ integrations: next })

@@ -11,18 +11,21 @@
 html,
 body {
   min-height: 100%;
+  font-family: var(--font-inter), sans-serif;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.wordmark {
+  font-family: var(--font-space-grotesk), sans-serif;
 }
 body {
   margin: 0;
   background: #f7f7f5;
   color: #20201f;
-  font-family:
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Text",
-    "Segoe UI",
-    sans-serif;
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
 }
