@@ -90,10 +90,11 @@ export async function generateRoute(userId: number, opportunityId: number) {
       "SELECT name, kind, parsed_text as content FROM sources WHERE user_id = ? ORDER BY id DESC LIMIT 8",
     )
     .all(userId) as { name: string; kind: string; content: string | null }[];
+  const hasKnowledge = sources.some((source) => source.kind !== "gmail");
   const availableSystems = [
     ...new Set([
       ...sources.filter((source) => source.kind === "gmail").map(() => "Gmail"),
-      "Company knowledge",
+      ...(hasKnowledge ? ["Company knowledge"] : []),
     ]),
   ];
   const prompt =

@@ -5448,6 +5448,47 @@ function Sources({
   );
 }
 
+function knowledgeLabel(profileType: "company" | "personal") {
+  return profileType === "personal" ? "Personal knowledge" : "Company knowledge";
+}
+
+function connectedSystems(
+  integrations: string[],
+  hasKnowledge: boolean,
+  profileType: "company" | "personal",
+) {
+  return [
+    ...integrations,
+    ...(hasKnowledge ? [knowledgeLabel(profileType)] : []),
+  ];
+}
+
+function normalizeRouteSystems(
+  stored: string[] | null | undefined,
+  integrations: string[],
+  hasKnowledge: boolean,
+  profileType: "company" | "personal",
+) {
+  const label = knowledgeLabel(profileType);
+  const fallback = connectedSystems(integrations, hasKnowledge, profileType);
+  if (!stored?.length) return fallback.length ? fallback : integrations;
+  const normalized = stored
+    .filter(
+      (system) =>
+        system === "Company knowledge" ||
+        system === "Personal knowledge" ||
+        system === label
+          ? hasKnowledge
+          : true,
+    )
+    .map((system) =>
+      system === "Company knowledge" || system === "Personal knowledge"
+        ? label
+        : system,
+    );
+  return normalized.length ? normalized : fallback.length ? fallback : integrations;
+}
+
 type LocalWorkspaceResponse = {
   user: { email: string; avatar: string | null };
   workspace: {
@@ -5561,6 +5602,7 @@ export function LocalDashboard() {
   )
     ? ["Gmail"]
     : [];
+  const hasKnowledge = files.length > 0;
   const opportunities: Opportunity[] = (workspace?.opportunities || []).map(
     (item, index) => ({
       id: `opp_${item.id}`,
@@ -5572,9 +5614,7 @@ export function LocalDashboard() {
       effort: index < 2 ? "Low" : "Medium",
       confidence: 94 - index * 3,
       status: item.status === "converted" ? "converted" : "open",
-      systems: integrations.length
-        ? ["Gmail", "Company knowledge"]
-        : ["Company knowledge"],
+      systems: connectedSystems(integrations, hasKnowledge, profileType),
     }),
   );
   const routes: RouteData[] = (workspace?.routes || []).map((item) => ({
@@ -5583,11 +5623,12 @@ export function LocalDashboard() {
     title: item.title,
     description: item.description,
     hours: item.hours,
-    systems:
-      item.systems ||
-      (integrations.length
-        ? ["Gmail", "Company knowledge"]
-        : ["Company knowledge"]),
+    systems: normalizeRouteSystems(
+      item.systems,
+      integrations,
+      hasKnowledge,
+      profileType,
+    ),
     createdAt: item.id,
     steps: item.steps || undefined,
     executions: item.executions,
@@ -6300,7 +6341,7 @@ export default function Home() {
       impact: "Medium",
       effort: "Medium",
       confidence: 100,
-      systems: integrations.length ? integrations : ["Company knowledge"],
+      systems: connectedSystems(integrations, files.length > 0, profileType),
     };
     const next = [opportunity, ...opportunities];
     setOpportunities(next);
