@@ -215,6 +215,7 @@ type RouteExecution = {
   durationMs: number;
   createdAt: string;
   completedSteps?: string[];
+  reviewed?: boolean;
 };
 const executionTime = (createdAt: string) =>
   new Date(
@@ -328,7 +329,7 @@ function MarkdownFileViewer({
 }: {
   output: string;
   name: string;
-  href: string;
+  href?: string;
 }) {
   return (
     <div className="mt-2 overflow-hidden rounded-[16px] border border-black/[.07] bg-white shadow-[0_1px_2px_rgba(0,0,0,.035)]">
@@ -340,7 +341,9 @@ function MarkdownFileViewer({
           {name}
         </span>
         <a
-          href={href}
+          href={
+            href ?? `data:text/markdown;charset=utf-8,${encodeURIComponent(output)}`
+          }
           download={name}
           className="pressable rounded-full bg-black/[.055] px-3 py-1.5 text-[9px] font-semibold text-[#62625e] hover:bg-black/[.08]"
         >
@@ -374,6 +377,7 @@ const companyIntegrations = [
   "Salesforce",
   "Slack",
   "Microsoft 365",
+  "WhatsApp",
   "Gmail",
   "Google Drive",
   "Notion",
@@ -400,6 +404,7 @@ const integrationLogos: Record<string, string> = {
   YouTube: "/integrations/youtube.svg",
   LinkedIn: "/integrations/linkedin.svg",
 };
+const repoUrl = "https://github.com/Janjs/heighliner";
 const leadDefaults: LeadForm = {
   name: "",
   description: "",
@@ -422,7 +427,7 @@ const exampleCompany: Company = {
   departments: "Wholesale sales, design, operations, logistics",
   processes: "Retailer order entry, product matching, stock checks, fulfilment",
   bottlenecks:
-    "Orders arrive in different formats and products are matched manually",
+    "Retailers send orders over WhatsApp and email in different formats, and products are matched manually",
 };
 const exampleFiles: SourceFile[] = [
   { name: "Order processing SOP.pdf", size: 184_320, type: "application/pdf" },
@@ -433,21 +438,21 @@ const exampleFiles: SourceFile[] = [
   },
   { name: "Retailer accounts.csv", size: 92_160, type: "text/csv" },
 ];
-const exampleIntegrations = ["Gmail", "Google Drive", "Salesforce"];
+const exampleIntegrations = ["WhatsApp", "Gmail", "Google Drive", "Salesforce"];
 const exampleOpportunities: Opportunity[] = [
   {
     id: "opp-orders",
     status: "converted",
     title: "Automate incoming orders",
     description:
-      "Extract retailer orders from email and PDF attachments, match products against the catalogue, and create clean records in Salesforce.",
+      "Extract retailer orders from WhatsApp voice notes, photos, and email PDFs, match products against the catalogue, and create clean records in Salesforce.",
     evidence:
-      "Order processing SOP.pdf · Orders arrive in different formats and products are matched manually",
+      "Order processing SOP.pdf · Retailers send orders over WhatsApp and email in different formats",
     hours: 8,
     impact: "High",
     effort: "Low",
     confidence: 94,
-    systems: ["Gmail", "Company knowledge", "Salesforce"],
+    systems: ["WhatsApp", "Gmail", "Company knowledge", "Salesforce"],
   },
   {
     id: "opp-catalogue",
@@ -465,20 +470,20 @@ const exampleOpportunities: Opportunity[] = [
   },
   {
     id: "opp-accounts",
-    status: "converted",
     title: "Validate retailer accounts",
     description:
-      "Cross-check incoming orders against active retailer accounts and flag orders from unknown or inactive shops.",
+      "Cross-check incoming WhatsApp and email orders against active retailer accounts and flag orders from unknown or inactive shops.",
     evidence:
-      "Retailer accounts.csv · New shops occasionally order before onboarding is complete",
+      "Retailer accounts.csv · New shops occasionally order on WhatsApp before onboarding is complete",
     hours: 4,
     impact: "High",
     effort: "Medium",
     confidence: 88,
-    systems: ["Gmail", "Salesforce"],
+    systems: ["WhatsApp", "Gmail", "Salesforce"],
   },
   {
     id: "opp-packing",
+    status: "converted",
     title: "Generate packing lists",
     description:
       "Consolidate confirmed orders into warehouse packing lists grouped by delivery route and pallet size.",
@@ -488,7 +493,7 @@ const exampleOpportunities: Opportunity[] = [
     impact: "Medium",
     effort: "Medium",
     confidence: 85,
-    systems: ["Salesforce", "Google Drive"],
+    systems: ["Salesforce", "Company knowledge"],
   },
   {
     id: "opp-shipments",
@@ -545,6 +550,11 @@ const exampleRouteSteps: Record<string, RouteStep[]> = {
       kind: "logic",
     },
     {
+      label: "Confirm SKU",
+      detail: "Choose between two close catalogue matches",
+      kind: "human",
+    },
+    {
       label: "Update catalogue alias",
       detail: "Save confirmed mapping as a retailer-specific alias",
       kind: "system",
@@ -552,8 +562,8 @@ const exampleRouteSteps: Record<string, RouteStep[]> = {
   ],
   "opp-accounts": [
     {
-      label: "Gmail",
-      detail: "Detect retailer name and email from incoming order",
+      label: "WhatsApp",
+      detail: "Detect shop name from the incoming order chat",
       kind: "system",
     },
     {
@@ -600,14 +610,10 @@ const exampleRouteSteps: Record<string, RouteStep[]> = {
       kind: "knowledge",
     },
     {
-      label: "Oversized order",
-      detail: "Split orders that exceed single-pallet limits",
-      kind: "logic",
-    },
-    {
-      label: "Google Drive",
-      detail: "Write formatted packing list for warehouse team",
+      label: "Output file",
+      detail: "Save the packing list as a Markdown file",
       kind: "system",
+      action: "create_file",
     },
   ],
   "opp-shipments": [
@@ -660,16 +666,96 @@ const exampleRouteSteps: Record<string, RouteStep[]> = {
     },
   ],
 };
+const packingListOutput = `# Packing list · 13 Aug 2026
+
+Dispatch for Amazonik warehouse, Zona Franca.
+
+## Route 1 · Eixample
+Pallet 1 of 1 · 48 units
+
+| SKU | Product | Qty |
+| --- | --- | --- |
+| BCN-GAUDI-03 | Trencadís magnet, 8 cm | 24 |
+| BCN-GAUDI-07 | Sagrada Família mosaic tile | 12 |
+| CB-BOAT-02 | Costa Brava sardana figure | 12 |
+
+Pick aisle B, then C.
+
+## Route 2 · Barceloneta
+Pallet 1 of 1 · 36 units
+
+| SKU | Product | Qty |
+| --- | --- | --- |
+| BCN-GAUDI-03 | Trencadís magnet, 8 cm | 18 |
+| CB-WAVE-01 | Medas Islands paperweight | 18 |
+
+Pick aisle B, then A.
+`;
 const exampleRoutes: RouteData[] = [
   {
     id: "example-route-orders",
     opportunityId: "opp-orders",
     title: "Automate incoming orders",
     description:
-      "Extract retailer orders from email and PDF attachments, match products against the catalogue, and create clean records in Salesforce.",
+      "Extract retailer orders from WhatsApp voice notes, photos, and email PDFs, match products against the catalogue, and create clean records in Salesforce.",
     hours: 8,
-    systems: ["Gmail", "Company knowledge", "Salesforce"],
+    systems: ["WhatsApp", "Gmail", "Company knowledge", "Salesforce"],
     createdAt: 1,
+    executions: [
+      {
+        id: "example-run-orders-1",
+        status: "completed",
+        output: JSON.stringify({
+          order: "1842",
+          retailer: "Souvenirs Passeig",
+          sku: "BCN-GAUDI-03",
+          qty: 24,
+        }),
+        durationMs: 94_000,
+        createdAt: "2026-08-13 09:42:00",
+        completedSteps: ["WhatsApp", "Gmail", "Human review", "Salesforce"],
+      },
+      {
+        id: "example-run-orders-2",
+        status: "completed",
+        output: JSON.stringify({
+          order: "1839",
+          retailer: "Casa del Recuerdo",
+          sku: "BCN-GAUDI-07",
+          qty: 12,
+        }),
+        durationMs: 126_000,
+        createdAt: "2026-08-12 16:18:00",
+        completedSteps: ["WhatsApp", "Gmail", "Human review", "Salesforce"],
+        reviewed: true,
+      },
+      {
+        id: "example-run-orders-3",
+        status: "completed",
+        output: JSON.stringify({
+          order: "1836",
+          retailer: "Botiga Gaudí",
+          sku: "CB-BOAT-02",
+          qty: 18,
+        }),
+        durationMs: 101_000,
+        createdAt: "2026-08-12 11:03:00",
+        completedSteps: ["WhatsApp", "Gmail", "Salesforce"],
+      },
+      {
+        id: "example-run-orders-4",
+        status: "completed",
+        output: JSON.stringify({
+          order: "1828",
+          retailer: "Souvenirs Passeig",
+          sku: "CB-WAVE-01",
+          qty: 36,
+        }),
+        durationMs: 112_000,
+        createdAt: "2026-08-08 17:25:00",
+        completedSteps: ["WhatsApp", "Gmail", "Salesforce"],
+      },
+    ],
   },
   {
     id: "example-route-catalogue",
@@ -681,17 +767,89 @@ const exampleRoutes: RouteData[] = [
     systems: ["Google Drive", "Company knowledge"],
     createdAt: 2,
     steps: exampleRouteSteps["opp-catalogue"],
+    executions: [
+      {
+        id: "example-run-catalogue-1",
+        status: "completed",
+        output: JSON.stringify({
+          input: "gaudi magnet mosaic 8cm",
+          sku: "BCN-GAUDI-03",
+          confidence: "96%",
+        }),
+        durationMs: 48_000,
+        createdAt: "2026-08-13 08:14:00",
+        completedSteps: exampleRouteSteps["opp-catalogue"].map(
+          (step) => step.label,
+        ),
+      },
+      {
+        id: "example-run-catalogue-2",
+        status: "completed",
+        output: JSON.stringify({
+          input: "sagrada tile magnet",
+          sku: "BCN-GAUDI-03",
+          alternatives: ["BCN-GAUDI-07"],
+          confidence: "72%",
+        }),
+        durationMs: 71_000,
+        createdAt: "2026-08-12 15:40:00",
+        completedSteps: exampleRouteSteps["opp-catalogue"].map(
+          (step) => step.label,
+        ),
+        reviewed: true,
+      },
+      {
+        id: "example-run-catalogue-3",
+        status: "completed",
+        output: JSON.stringify({
+          input: "costa brava boat",
+          sku: "CB-BOAT-02",
+          confidence: "91%",
+        }),
+        durationMs: 39_000,
+        createdAt: "2026-08-11 10:22:00",
+        completedSteps: exampleRouteSteps["opp-catalogue"]
+          .filter((step) => step.kind !== "human")
+          .map((step) => step.label),
+      },
+    ],
   },
   {
-    id: "example-route-accounts",
-    opportunityId: "opp-accounts",
-    title: "Validate retailer accounts",
+    id: "example-route-packing",
+    opportunityId: "opp-packing",
+    title: "Generate packing lists",
     description:
-      "Cross-check incoming orders against active retailer accounts and flag orders from unknown or inactive shops.",
-    hours: 4,
-    systems: ["Gmail", "Salesforce"],
+      "Consolidate confirmed orders into warehouse packing lists grouped by delivery route and pallet size.",
+    hours: 3,
+    systems: ["Salesforce", "Company knowledge"],
     createdAt: 3,
-    steps: exampleRouteSteps["opp-accounts"],
+    steps: exampleRouteSteps["opp-packing"],
+    executions: [
+      {
+        id: "example-run-packing-1",
+        status: "completed",
+        output: packingListOutput,
+        outputName: "Packing list 13 Aug.md",
+        outputType: "text/markdown",
+        durationMs: 18_000,
+        createdAt: "2026-08-13 07:05:00",
+        completedSteps: exampleRouteSteps["opp-packing"].map(
+          (step) => step.label,
+        ),
+      },
+      {
+        id: "example-run-packing-2",
+        status: "completed",
+        output: packingListOutput.replace("13 Aug 2026", "12 Aug 2026"),
+        outputName: "Packing list 12 Aug.md",
+        outputType: "text/markdown",
+        durationMs: 21_000,
+        createdAt: "2026-08-12 07:12:00",
+        completedSteps: exampleRouteSteps["opp-packing"].map(
+          (step) => step.label,
+        ),
+      },
+    ],
   },
 ];
 const amazonikLogo = "https://www.amazonik.es/www/web/logo/1-1511349621.png";
@@ -830,6 +988,7 @@ type Copy = {
     searchSystems: string;
     noMatchingSystems: string;
     catalogError: string;
+    catalogUnavailable: string;
   };
   flow: {
     newItem: string;
@@ -1008,6 +1167,7 @@ const translations: Record<Lang, Copy> = {
       searchSystems: "Search systems",
       noMatchingSystems: "No systems match that search.",
       catalogError: "Could not load systems.",
+      catalogUnavailable: "Run it yourself and connect it to Composio.",
     },
     flow: {
       newItem: "New item received",
@@ -1195,6 +1355,7 @@ const translations: Record<Lang, Copy> = {
       searchSystems: "Buscar sistemas",
       noMatchingSystems: "Ningún sistema coincide con esa búsqueda.",
       catalogError: "No se pudieron cargar los sistemas.",
+      catalogUnavailable: "Ejecútalo tú mismo y conéctalo a Composio.",
     },
     flow: {
       newItem: "Nuevo elemento recibido",
@@ -1381,6 +1542,7 @@ const translations: Record<Lang, Copy> = {
       searchSystems: "Systemen zoeken",
       noMatchingSystems: "Geen systemen komen overeen met die zoekopdracht.",
       catalogError: "Systemen konden niet worden geladen.",
+      catalogUnavailable: "Draai het zelf en koppel het aan Composio.",
     },
     flow: {
       newItem: "Nieuw item ontvangen",
@@ -1518,7 +1680,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     previewTitle: "6 valuable routes found",
     opportunity: "Automate incoming orders",
     opportunityBody:
-      "Extract orders, validate products, and create clean records in Salesforce.",
+      "Extract orders from WhatsApp and email, validate products, and create clean records in Salesforce.",
     saved: "8h saved / week",
     routeTitle:
       "After one interview, we connect your systems in a day. Then Heighliner finds the opportunities, builds the routes, and takes repetitive work off your team.",
@@ -1589,7 +1751,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     previewTitle: "6 rutas valiosas encontradas",
     opportunity: "Automatizar pedidos entrantes",
     opportunityBody:
-      "Extrae pedidos, valida productos y crea registros limpios en Salesforce.",
+      "Extrae pedidos de WhatsApp y email, valida productos y crea registros limpios en Salesforce.",
     saved: "8 h ahorradas / semana",
     routeTitle:
       "Tras una entrevista, conectamos tus sistemas en un día. Después, Heighliner encuentra las oportunidades, construye las rutas y libera a tu equipo del trabajo repetitivo.",
@@ -1657,7 +1819,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     previewTitle: "6 waardevolle routes gevonden",
     opportunity: "Inkomende orders automatiseren",
     opportunityBody:
-      "Haal orders eruit, valideer producten en maak schone records in Salesforce.",
+      "Haal orders uit WhatsApp en e-mail, valideer producten en maak schone records in Salesforce.",
     saved: "8 uur bespaard / week",
     routeTitle:
       "Na één interview koppelen we je systemen binnen een dag. Daarna vindt Heighliner de kansen, bouwt de routes en neemt repetitief werk uit handen.",
@@ -1828,7 +1990,6 @@ function Landing({ explore }: { explore: () => void }) {
     "idle" | "submitting" | "success" | "error"
   >("idle");
   const copy = landingCopy[lang];
-  const repoUrl = "https://github.com/Janjs/heighliner";
   const clearInquiryError = () => {
     if (inquiryState === "error") setInquiryState("idle");
   };
@@ -1997,8 +2158,8 @@ function Landing({ explore }: { explore: () => void }) {
                         </p>
                         <div className="mt-6 flex items-center justify-between border-t border-black/[.06] pt-4">
                           <span className="flex items-center gap-2 text-[10px] text-[#777772]">
-                            Gmail <span className="text-[#bbb]">→</span>{" "}
-                            Salesforce
+                            WhatsApp · Gmail{" "}
+                            <span className="text-[#bbb]">→</span> Salesforce
                           </span>
                           <span className="text-[10px] font-semibold">
                             {copy.saved}
@@ -2075,7 +2236,7 @@ function Landing({ explore }: { explore: () => void }) {
                   {activeJourney === 0 && (
                     <div className="grid h-[410px] place-items-center">
                       <div className="grid w-full max-w-[520px] grid-cols-[1fr_56px_1.1fr] items-center gap-y-3">
-                        {["Gmail", "Google Drive", "Salesforce"].map(
+                        {["WhatsApp", "Gmail", "Salesforce"].map(
                           (system, index) => (
                             <div key={system} className="contents">
                               <div className="flex items-center gap-3 rounded-[15px] border border-white/10 bg-white/[.055] p-3.5">
@@ -2214,7 +2375,7 @@ function Landing({ explore }: { explore: () => void }) {
                         {[
                           [
                             Mail01Icon,
-                            "Gmail",
+                            "WhatsApp",
                             translations[lang].flow.newItem,
                             "bg-[#ececea] text-[#555550]",
                           ],
@@ -2239,10 +2400,18 @@ function Landing({ explore }: { explore: () => void }) {
                               <span
                                 className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] ${String(tone)}`}
                               >
-                                <HugeiconsIcon
-                                  icon={icon as typeof Route01Icon}
-                                  size={14}
-                                />
+                                {integrationLogos[String(title)] ? (
+                                  <img
+                                    src={integrationLogos[String(title)]}
+                                    alt=""
+                                    className="h-4 w-4 object-contain"
+                                  />
+                                ) : (
+                                  <HugeiconsIcon
+                                    icon={icon as typeof Route01Icon}
+                                    size={14}
+                                  />
+                                )}
                               </span>
                               <span className="min-w-0">
                                 <span className="block truncate text-[11px] font-semibold">
@@ -2303,7 +2472,9 @@ function Landing({ explore }: { explore: () => void }) {
                               translations[lang].flow.completeAction,
                               "bg-[#ececea] text-[#555550]",
                             ],
-                          ].map(([icon, title, detail, tone], index) => (
+                          ].map(([icon, title, detail, tone], index) => {
+                            const logo = findIntegration(String(title), "");
+                            return (
                             <div
                               key={String(title)}
                               className="landing-result-card relative z-10 flex min-w-0 items-center gap-2.5 rounded-[17px] border border-white/10 bg-[#2c2c2a] p-3 text-white shadow-[0_1px_2px_rgba(0,0,0,.12),0_8px_22px_rgba(0,0,0,.18)]"
@@ -2314,10 +2485,18 @@ function Landing({ explore }: { explore: () => void }) {
                               <span
                                 className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] ${String(tone)}`}
                               >
-                                <HugeiconsIcon
-                                  icon={icon as typeof Route01Icon}
-                                  size={14}
-                                />
+                                {logo ? (
+                                  <img
+                                    src={integrationLogos[logo]}
+                                    alt=""
+                                    className="h-4 w-4 object-contain"
+                                  />
+                                ) : (
+                                  <HugeiconsIcon
+                                    icon={icon as typeof Route01Icon}
+                                    size={14}
+                                  />
+                                )}
                               </span>
                               <span className="min-w-0">
                                 <span className="block truncate text-[10px] font-semibold">
@@ -2328,7 +2507,8 @@ function Landing({ explore }: { explore: () => void }) {
                                 </span>
                               </span>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -3424,6 +3604,13 @@ function routeStepAlias(
   return words[0].toUpperCase() + words.slice(1);
 }
 
+function findIntegration(label: string, detail: string) {
+  if (integrationLogos[label]) return label;
+  return Object.keys(integrationLogos)
+    .sort((a, b) => b.length - a.length)
+    .find((name) => `${label} ${detail}`.includes(name));
+}
+
 function makeFlow(
   route: RouteData,
   lang: Lang,
@@ -3432,12 +3619,11 @@ function makeFlow(
   edges: Edge[];
 } {
   const flowCopy = translations[lang].flow;
-  const system = route.systems[0] || "Gmail";
-  const destination = route.systems.at(-1) || "Business system";
-  const findIntegration = (label: string, detail: string) =>
-    Object.keys(integrationLogos).find((name) =>
-      `${label} ${detail}`.includes(name),
-    );
+  const connected = route.systems.filter((name) => integrationLogos[name]);
+  const destination =
+    connected.at(-1) || route.systems.at(-1) || "Business system";
+  const sources = connected.filter((name) => name !== destination).slice(0, 2);
+  const inputs = sources.length ? sources : [route.systems[0] || "Gmail"];
   const defaultSteps: [
     string,
     string,
@@ -3445,7 +3631,14 @@ function makeFlow(
     string?,
     RouteStep["action"]?,
   ][] = [
-    [system, flowCopy.newItem, "system", system],
+    ...inputs.map(
+      (name): [string, string, FlowData["kind"], string?] => [
+        name,
+        flowCopy.newItem,
+        "system",
+        name,
+      ],
+    ),
     [flowCopy.collectContext, flowCopy.readSourceData, "knowledge"],
     [
       route.title.replace(flowCopy.routePrefixes, ""),
@@ -3520,15 +3713,27 @@ function makeFlow(
       })),
     };
   }
-  const positions = [
-    [270, 20],
-    [270, 145],
-    [270, 270],
-    [270, 395],
-    [55, 535],
-    [485, 535],
-    [270, 680],
-  ];
+  const branched = inputs.length > 1;
+  const positions = branched
+    ? [
+        [55, 20],
+        [485, 20],
+        [270, 145],
+        [270, 270],
+        [270, 395],
+        [55, 535],
+        [485, 535],
+        [270, 680],
+      ]
+    : [
+        [270, 20],
+        [270, 145],
+        [270, 270],
+        [270, 395],
+        [55, 535],
+        [485, 535],
+        [270, 680],
+      ];
   const nodes: Node<FlowData>[] = labels.map((l, i) => ({
     id: String(i + 1),
     type: "flow",
@@ -3557,16 +3762,24 @@ function makeFlow(
     labelStyle: { fontSize: 9, fill: "#888883" },
     labelBgStyle: { fill: "#f7f7f5" },
   });
+  const collect = String(inputs.length + 1);
+  const ai = String(inputs.length + 2);
+  const conf = String(inputs.length + 3);
+  const human = String(inputs.length + 4);
+  const update = String(inputs.length + 5);
+  const complete = String(inputs.length + 6);
   return {
     nodes,
     edges: [
-      mk("a", "1", "2"),
-      mk("b", "2", "3"),
-      mk("c", "3", "4"),
-      mk("d", "4", "5", flowCopy.reviewEdge),
-      mk("e", "4", "6", flowCopy.confidenceEdge),
-      mk("f", "5", "7"),
-      mk("g", "6", "7"),
+      ...inputs.map((_, index) =>
+        mk(`in-${index}`, String(index + 1), collect),
+      ),
+      mk("b", collect, ai),
+      mk("c", ai, conf),
+      mk("d", conf, human, flowCopy.reviewEdge),
+      mk("e", conf, update, flowCopy.confidenceEdge),
+      mk("f", human, complete),
+      mk("g", update, complete),
     ],
   };
 }
@@ -4143,7 +4356,9 @@ function Routes({
                     <p className="mt-2 text-[10px] leading-5 text-[#777772]">
                       {inspected.data.action === "create_file"
                         ? "Creates a downloadable Markdown file."
-                        : copy.flow.usesConnectedAccount(selected.systems[0])}
+                        : copy.flow.usesConnectedAccount(
+                            inspected.data.integration || selected.systems[0],
+                          )}
                     </p>
                   )}
                 </div>
@@ -4350,7 +4565,9 @@ function Routes({
                       ? copy.routes.running
                       : selectedExecution.status === "failed"
                         ? copy.routes.failedStatus
-                        : copy.routes.completedStatus}
+                        : selectedExecution.reviewed
+                          ? copy.routes.reviewStatus
+                          : copy.routes.completedStatus}
                   </div>
                   <div className="mt-4 flex items-center justify-between text-[9px] text-[#92928d]">
                     <span>{executionTime(selectedExecution.createdAt)}</span>
@@ -4374,7 +4591,11 @@ function Routes({
                       <MarkdownFileViewer
                         output={selectedExecution.output}
                         name={selectedExecution.outputName}
-                        href={`/api/routes/${selected.id}/runs/${selectedExecution.id}/file`}
+                        href={
+                          /^\d+$/.test(selected.id)
+                            ? `/api/routes/${selected.id}/runs/${selectedExecution.id}/file`
+                            : undefined
+                        }
                       />
                     ) : (
                       <RunResult
@@ -4422,6 +4643,11 @@ function Routes({
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+                {selectedExecution.reviewed && (
+                  <div className="mt-6 rounded-[16px] bg-[#fff1e9] p-4 text-[10px] leading-5 text-[#8b512f]">
+                    {executionCopy.review}
                   </div>
                 )}
               </motion.div>
@@ -4477,7 +4703,9 @@ function Routes({
                               ? copy.routes.running
                               : execution.status === "failed"
                                 ? copy.routes.failedStatus
-                                : copy.routes.completedStatus}
+                                : execution.reviewed
+                                  ? copy.routes.reviewStatus
+                                  : copy.routes.completedStatus}
                           </span>
                           <HugeiconsIcon
                             icon={ChevronRightIcon}
@@ -4698,9 +4926,26 @@ function SystemCatalog({
               <LoadingOrb state="searching" size="center" />
             </div>
           ) : error ? (
-            <p className="py-16 text-center text-[12px] text-[#777772]">
-              {error}
-            </p>
+            error === "Composio is not configured." ? (
+              <div className="grid place-items-center gap-3 py-16 text-center">
+                <p className="text-[12px] leading-5 text-[#777772]">
+                  {copy.sources.catalogUnavailable}
+                </p>
+                <a
+                  href={repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pressable inline-flex items-center gap-2 text-[12px] font-medium text-[#20201f] hover:text-black"
+                >
+                  <GitHubMark className="h-3.5 w-3.5" />
+                  GitHub
+                </a>
+              </div>
+            ) : (
+              <p className="py-16 text-center text-[12px] text-[#777772]">
+                {error}
+              </p>
+            )
           ) : visible.length === 0 ? (
             <p className="py-16 text-center text-[12px] text-[#777772]">
               {copy.sources.noMatchingSystems}
@@ -4799,7 +5044,7 @@ function Sources({
     ...suggestedIntegrations(profileType).filter(
       (name) => !integrations.includes(name),
     ),
-  ];
+  ].slice(0, 6);
   const field = (key: keyof Company, value: string) =>
     setDraftCompany((c) => ({ ...c, [key]: value }));
   const addFiles = (list: FileList | null) => {
