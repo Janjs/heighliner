@@ -19,7 +19,16 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS sources (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, parsed_text TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));
   CREATE TABLE IF NOT EXISTS opportunities (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, title TEXT NOT NULL, description TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));
   CREATE TABLE IF NOT EXISTS routes (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, opportunity_id INTEGER, title TEXT NOT NULL, description TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));
+  CREATE TABLE IF NOT EXISTS route_runs (id INTEGER PRIMARY KEY, route_id INTEGER NOT NULL, user_id INTEGER NOT NULL, status TEXT NOT NULL, output TEXT NOT NULL, duration_ms INTEGER NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(route_id) REFERENCES routes(id), FOREIGN KEY(user_id) REFERENCES users(id));
 `);
+
+const runColumns = db.pragma("table_info(route_runs)") as { name: string }[];
+if (!runColumns.some((column) => column.name === "completed_steps_json"))
+  db.exec("ALTER TABLE route_runs ADD COLUMN completed_steps_json TEXT");
+if (!runColumns.some((column) => column.name === "output_name"))
+  db.exec("ALTER TABLE route_runs ADD COLUMN output_name TEXT");
+if (!runColumns.some((column) => column.name === "output_type"))
+  db.exec("ALTER TABLE route_runs ADD COLUMN output_type TEXT");
 
 const userColumns = db.pragma("table_info(users)") as { name: string }[];
 if (!userColumns.some((column) => column.name === "gmail_account_id"))
@@ -38,6 +47,12 @@ if (!routeColumns.some((column) => column.name === "last_run_at"))
   db.exec("ALTER TABLE routes ADD COLUMN last_run_at TEXT");
 if (!routeColumns.some((column) => column.name === "last_run_status"))
   db.exec("ALTER TABLE routes ADD COLUMN last_run_status TEXT");
+if (!routeColumns.some((column) => column.name === "steps_json"))
+  db.exec("ALTER TABLE routes ADD COLUMN steps_json TEXT");
+if (!routeColumns.some((column) => column.name === "systems_json"))
+  db.exec("ALTER TABLE routes ADD COLUMN systems_json TEXT");
+if (!routeColumns.some((column) => column.name === "hours"))
+  db.exec("ALTER TABLE routes ADD COLUMN hours INTEGER NOT NULL DEFAULT 4");
 
 const workspaceColumns = db.pragma("table_info(workspaces)") as {
   name: string;

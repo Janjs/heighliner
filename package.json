@@ -17,7 +17,10 @@
     "framer-motion": "^12.23.12",
     "next": "^15.2.4",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "thinking-orbs": "^0.3.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",

@@ -6,6 +6,34 @@ export async function GET() {
   const user = await currentUser();
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const routes = db
+    .prepare(
+      "SELECT id, opportunity_id as opportunityId, title, description, hours, systems_json as systemsJson, steps_json as stepsJson FROM routes WHERE user_id = ? ORDER BY id DESC",
+    )
+    .all(user.id) as {
+    id: number;
+    opportunityId: number | null;
+    title: string;
+    description: string;
+    hours: number;
+    systemsJson: string | null;
+    stepsJson: string | null;
+  }[];
+  const runs = db
+    .prepare(
+      "SELECT id, route_id as routeId, status, output, output_name as outputName, output_type as outputType, duration_ms as durationMs, completed_steps_json as completedStepsJson, created_at as createdAt FROM route_runs WHERE user_id = ? ORDER BY id DESC",
+    )
+    .all(user.id) as {
+    id: number;
+    routeId: number;
+    status: string;
+    output: string;
+    outputName: string | null;
+    outputType: string | null;
+    durationMs: number;
+    completedStepsJson: string | null;
+    createdAt: string;
+  }[];
   return NextResponse.json({
     user: { email: user.email, avatar: user.avatar },
     workspace:
@@ -24,11 +52,24 @@ export async function GET() {
         "SELECT id, title, description, status FROM opportunities WHERE user_id = ? ORDER BY id DESC",
       )
       .all(user.id),
-    routes: db
-      .prepare(
-        "SELECT id, title, description, last_run_at as lastRunAt, last_run_status as lastRunStatus FROM routes WHERE user_id = ? ORDER BY id DESC",
-      )
-      .all(user.id),
+    routes: routes.map((route) => ({
+      id: route.id,
+      opportunityId: route.opportunityId,
+      title: route.title,
+      description: route.description,
+      hours: route.hours,
+      systems: route.systemsJson ? JSON.parse(route.systemsJson) : null,
+      steps: route.stepsJson ? JSON.parse(route.stepsJson) : null,
+      executions: runs
+        .filter((run) => run.routeId === route.id)
+        .map(({ routeId: _, completedStepsJson, ...run }) => ({
+          ...run,
+          id: String(run.id),
+          completedSteps: completedStepsJson
+            ? JSON.parse(completedStepsJson)
+            : [],
+        })),
+    })),
   });
 }
 export async function POST(request: Request) {
@@ -69,6 +110,7 @@ export async function DELETE() {
   if (!user)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   db.transaction(() => {
+    db.prepare("DELETE FROM route_runs WHERE user_id = ?").run(user.id);
     db.prepare("DELETE FROM routes WHERE user_id = ?").run(user.id);
     db.prepare("DELETE FROM opportunities WHERE user_id = ?").run(user.id);
     db.prepare("DELETE FROM sources WHERE user_id = ?").run(user.id);

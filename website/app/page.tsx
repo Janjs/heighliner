@@ -26,16 +26,18 @@ import {
   File01Icon,
   Folder01Icon,
   GitBranchIcon,
-  Loading01Icon,
   Mail01Icon,
   MoreVerticalIcon,
   PlayIcon,
   Route01Icon,
+  Search01Icon,
   SparklesIcon,
   Upload01Icon,
   UserCheck01Icon,
 } from "@hugeicons/core-free-icons";
 import { AnimatePresence, motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Background,
   Controls,
@@ -48,6 +50,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from "@xyflow/react";
+import { LoadingOrb } from "../components/loading-orb";
 
 type View = "Routes" | "Opportunities" | "Sources";
 type Lang = "en" | "es" | "nl";
@@ -157,12 +160,6 @@ const chatCopyByLang = {
   }
 >;
 
-const executionTimesByLang = {
-  en: ["Today, 09:42", "Yesterday, 16:18", "Yesterday, 11:03", "Aug 8, 17:25"],
-  es: ["Hoy, 09:42", "Ayer, 16:18", "Ayer, 11:03", "8 ago, 17:25"],
-  nl: ["Vandaag, 09:42", "Gisteren, 16:18", "Gisteren, 11:03", "8 aug, 17:25"],
-} satisfies Record<Lang, [string, string, string, string]>;
-
 const routePanelLabel: Record<Lang, string> = {
   en: "Route panel",
   es: "Panel de ruta",
@@ -193,21 +190,176 @@ type Opportunity = {
   effort: "Low" | "Medium";
   confidence: number;
   systems: string[];
+  status?: "open" | "converted";
 };
 type RouteData = {
   id: string;
+  opportunityId?: string;
   title: string;
   description: string;
   hours: number;
   systems: string[];
   createdAt: number;
   steps?: RouteStep[];
+  executions?: RouteExecution[];
 };
-type RouteStep = Pick<FlowData, "label" | "detail" | "kind">;
+type RouteStep = Pick<FlowData, "label" | "detail" | "kind"> & {
+  action?: "read_sources" | "read_files" | "ai_transform" | "create_file";
+};
+type RouteExecution = {
+  id: string;
+  status: "running" | "completed" | "failed";
+  output: string;
+  outputName?: string | null;
+  outputType?: string | null;
+  durationMs: number;
+  createdAt: string;
+  completedSteps?: string[];
+};
+const executionTime = (createdAt: string) =>
+  new Date(
+    createdAt.includes("T") ? createdAt : `${createdAt.replace(" ", "T")}Z`,
+  ).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+const executionDuration = (durationMs: number) =>
+  durationMs < 1_000
+    ? `${durationMs}ms`
+    : durationMs < 60_000
+      ? `${(durationMs / 1_000).toFixed(1)}s`
+      : `${Math.floor(durationMs / 60_000)}m ${Math.round((durationMs % 60_000) / 1_000)}s`;
+const recentRuns = (route: RouteData) =>
+  (route.executions || []).filter(
+    (execution) =>
+      Date.now() -
+        new Date(
+          execution.createdAt.includes("T")
+            ? execution.createdAt
+            : `${execution.createdAt.replace(" ", "T")}Z`,
+        ).getTime() <
+      7 * 24 * 60 * 60 * 1_000,
+  ).length;
+const successRate = (route: RouteData) => {
+  const executions = (route.executions || []).filter(
+    (run) => run.status !== "running",
+  );
+  if (!executions.length) return "—";
+  return `${Math.round((executions.filter((run) => run.status === "completed").length / executions.length) * 100)}%`;
+};
+function RunResult({ output }: { output: string }) {
+  const [raw, setRaw] = useState(false);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(output.replace(/^```json\s*|\s*```$/g, ""));
+  } catch {
+    return (
+      <div className="mt-2 whitespace-pre-wrap rounded-[16px] bg-[#edf6ef] p-4 text-[11px] leading-5 text-[#396c47]">
+        {output}
+      </div>
+    );
+  }
+
+  const rows = Array.isArray(parsed) ? parsed : [parsed];
+  const tabular = rows.every(
+    (row) => row && typeof row === "object" && !Array.isArray(row),
+  );
+  const columns = tabular
+    ? [...new Set(rows.flatMap((row) => Object.keys(row as object)))]
+    : [];
+  const value = (item: unknown) =>
+    item && typeof item === "object"
+      ? JSON.stringify(item)
+      : String(item ?? "—");
+
+  return (
+    <div className="mt-2">
+      <div className="mb-2 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setRaw((current) => !current)}
+          className="pressable rounded-full bg-black/[.055] px-3 py-1.5 text-[9px] font-semibold text-[#686863] hover:bg-black/[.08]"
+        >
+          {raw ? "View formatted" : "View raw JSON"}
+        </button>
+      </div>
+      {raw ? (
+        <pre className="overflow-x-auto whitespace-pre-wrap rounded-[16px] bg-[#20201f] p-4 text-[10px] leading-5 text-white">
+          {JSON.stringify(parsed, null, 2)}
+        </pre>
+      ) : tabular ? (
+        <div className="overflow-x-auto rounded-[16px] border border-[#dce9df] bg-[#edf6ef]">
+          <table className="w-full border-collapse text-left text-[10px] text-[#396c47]">
+            <thead>
+              <tr className="border-b border-[#d2e2d6]">
+                {columns.map((column) => (
+                  <th key={column} className="px-3 py-2.5 font-semibold">
+                    {column.replaceAll("_", " ")}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, index) => (
+                <tr
+                  key={index}
+                  className="border-b border-[#dce9df] last:border-0"
+                >
+                  {columns.map((column) => (
+                    <td key={column} className="px-3 py-2.5 align-top">
+                      {value((row as Record<string, unknown>)[column])}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="whitespace-pre-wrap rounded-[16px] bg-[#edf6ef] p-4 text-[11px] leading-5 text-[#396c47]">
+          {value(parsed)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MarkdownFileViewer({
+  output,
+  name,
+  href,
+}: {
+  output: string;
+  name: string;
+  href: string;
+}) {
+  return (
+    <div className="mt-2 overflow-hidden rounded-[16px] border border-black/[.07] bg-white shadow-[0_1px_2px_rgba(0,0,0,.035)]">
+      <div className="flex items-center gap-3 border-b border-black/[.06] px-3 py-2.5">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] bg-[#edf6ef] text-[#396c47]">
+          <HugeiconsIcon icon={File01Icon} size={15} />
+        </span>
+        <span className="min-w-0 flex-1 truncate text-[10px] font-semibold">
+          {name}
+        </span>
+        <a
+          href={href}
+          download={name}
+          className="pressable rounded-full bg-black/[.055] px-3 py-1.5 text-[9px] font-semibold text-[#62625e] hover:bg-black/[.08]"
+        >
+          Download
+        </a>
+      </div>
+      <div className="max-h-[520px] overflow-auto bg-[#f7f7f4] p-3">
+        <article className="min-h-64 rounded-[12px] bg-white px-5 py-6 text-[11px] leading-5 text-[#444440] shadow-sm [&_a]:text-[#cb501d] [&_a]:underline [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-[#ffb38e] [&_blockquote]:pl-3 [&_code]:rounded [&_code]:bg-black/[.055] [&_code]:px-1 [&_h1]:mb-4 [&_h1]:text-[20px] [&_h1]:font-semibold [&_h1]:tracking-[-.035em] [&_h2]:mb-2 [&_h2]:mt-5 [&_h2]:text-[15px] [&_h2]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:text-[12px] [&_h3]:font-semibold [&_hr]:my-5 [&_hr]:border-black/[.08] [&_li]:my-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2.5 [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-[10px] [&_pre]:bg-[#20201f] [&_pre]:p-3 [&_pre]:text-white [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-black/[.08] [&_td]:p-2 [&_th]:border [&_th]:border-black/[.08] [&_th]:bg-black/[.035] [&_th]:p-2 [&_th]:text-left [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{output}</ReactMarkdown>
+        </article>
+      </div>
+    </div>
+  );
+}
 type FlowData = {
   label: string;
   detail: string;
   kind: "system" | "ai" | "knowledge" | "logic" | "human";
+  action?: RouteStep["action"];
   integration?: string;
   status?: "idle" | "running" | "done";
 };
@@ -218,14 +370,24 @@ const panelTransition = {
   duration: 0.12,
   ease: [0.25, 0.1, 0.25, 1] as const,
 };
-const integrationNames = [
-  "Gmail",
-  "Google Drive",
+const companyIntegrations = [
+  "Salesforce",
   "Slack",
   "Microsoft 365",
-  "Salesforce",
+  "Gmail",
+  "Google Drive",
   "Notion",
 ];
+const personalIntegrations = [
+  "WhatsApp",
+  "Gmail",
+  "Google Drive",
+  "YouTube",
+  "Notion",
+  "LinkedIn",
+];
+const suggestedIntegrations = (profileType: "company" | "personal") =>
+  profileType === "personal" ? personalIntegrations : companyIntegrations;
 
 const integrationLogos: Record<string, string> = {
   Gmail: "/integrations/gmail.svg",
@@ -234,6 +396,9 @@ const integrationLogos: Record<string, string> = {
   "Microsoft 365": "/integrations/microsoft-365.svg",
   Salesforce: "/integrations/salesforce.svg",
   Notion: "/integrations/notion.svg",
+  WhatsApp: "/integrations/whatsapp.svg",
+  YouTube: "/integrations/youtube.svg",
+  LinkedIn: "/integrations/linkedin.svg",
 };
 const leadDefaults: LeadForm = {
   name: "",
@@ -272,6 +437,7 @@ const exampleIntegrations = ["Gmail", "Google Drive", "Salesforce"];
 const exampleOpportunities: Opportunity[] = [
   {
     id: "opp-orders",
+    status: "converted",
     title: "Automate incoming orders",
     description:
       "Extract retailer orders from email and PDF attachments, match products against the catalogue, and create clean records in Salesforce.",
@@ -285,6 +451,7 @@ const exampleOpportunities: Opportunity[] = [
   },
   {
     id: "opp-catalogue",
+    status: "converted",
     title: "Match products to catalogue",
     description:
       "Map free-text product descriptions from retailer orders to SKU entries in the product catalogue spreadsheet.",
@@ -298,6 +465,7 @@ const exampleOpportunities: Opportunity[] = [
   },
   {
     id: "opp-accounts",
+    status: "converted",
     title: "Validate retailer accounts",
     description:
       "Cross-check incoming orders against active retailer accounts and flag orders from unknown or inactive shops.",
@@ -495,6 +663,7 @@ const exampleRouteSteps: Record<string, RouteStep[]> = {
 const exampleRoutes: RouteData[] = [
   {
     id: "example-route-orders",
+    opportunityId: "opp-orders",
     title: "Automate incoming orders",
     description:
       "Extract retailer orders from email and PDF attachments, match products against the catalogue, and create clean records in Salesforce.",
@@ -504,6 +673,7 @@ const exampleRoutes: RouteData[] = [
   },
   {
     id: "example-route-catalogue",
+    opportunityId: "opp-catalogue",
     title: "Match products to catalogue",
     description:
       "Map free-text product descriptions from retailer orders to SKU entries in the product catalogue spreadsheet.",
@@ -514,6 +684,7 @@ const exampleRoutes: RouteData[] = [
   },
   {
     id: "example-route-accounts",
+    opportunityId: "opp-accounts",
     title: "Validate retailer accounts",
     description:
       "Cross-check incoming orders against active retailer accounts and flag orders from unknown or inactive shops.",
@@ -575,10 +746,16 @@ type Copy = {
     descriptionLabel: string;
     cancel: string;
     createOpportunity: string;
+    newTab: string;
+    usedTab: string;
+    newEmpty: string;
+    usedEmpty: string;
+    deleteOpportunity: (title: string) => string;
     emptyTitle: string;
     emptyDescription: string;
     addSource: string;
     heading: (count: number) => string;
+    inUseHeading: (count: number) => string;
     description: string;
     recommended: string;
     evidence: string;
@@ -614,10 +791,17 @@ type Copy = {
     backToRoutes: string;
     pastExecutions: string;
     completedStatus: string;
+    failedStatus: string;
+    fixRoute: string;
     reviewStatus: string;
     justNow: string;
     stepProgress: (step: number, total: number) => string;
     activeRoutes: (count: number) => string;
+    deleteRoute: (title: string) => string;
+    deleteRouteTitle: (title: string) => string;
+    deleteRouteDescription: string;
+    cancelDelete: string;
+    confirmDelete: string;
   };
   review: {
     title: string;
@@ -641,6 +825,11 @@ type Copy = {
     cancel: string;
     connect: string;
     disconnect: string;
+    more: string;
+    allSystems: string;
+    searchSystems: string;
+    noMatchingSystems: string;
+    catalogError: string;
   };
   flow: {
     newItem: string;
@@ -724,11 +913,17 @@ const translations: Record<Lang, Copy> = {
       descriptionLabel: "Description",
       cancel: "Cancel",
       createOpportunity: "Create opportunity",
+      newTab: "Found",
+      usedTab: "In use",
+      newEmpty: "No opportunities found.",
+      usedEmpty: "No opportunities in use yet.",
+      deleteOpportunity: (title) => `Delete ${title}`,
       emptyTitle: "Add your first source",
       emptyDescription:
         "Share a file or connect a system so Heighliner can find opportunities for you.",
       addSource: "Add a source",
       heading: (count) => `${count} valuable routes found.`,
+      inUseHeading: (count) => `${count} valuable routes in use.`,
       description:
         "Start with the highest-confidence route. You can inspect and change every step before running it.",
       recommended: "Recommended",
@@ -767,11 +962,19 @@ const translations: Record<Lang, Copy> = {
       backToRoutes: "Back to routes",
       pastExecutions: "Runs",
       completedStatus: "Completed",
+      failedStatus: "Error",
+      fixRoute: "Fix route",
       reviewStatus: "Reviewed",
       justNow: "Just now",
       stepProgress: (step, total) => `Running step ${step} of ${total}`,
       activeRoutes: (count) =>
         `${count} active ${count === 1 ? "route" : "routes"}`,
+      deleteRoute: (title) => `Delete ${title}`,
+      deleteRouteTitle: (title) => `Delete ${title}?`,
+      deleteRouteDescription:
+        "This route and its run history will be permanently deleted.",
+      cancelDelete: "Cancel",
+      confirmDelete: "Delete route",
     },
     review: {
       title: "Confirm the best match",
@@ -800,6 +1003,11 @@ const translations: Record<Lang, Copy> = {
       cancel: "Cancel",
       connect: "Connect",
       disconnect: "Disconnect",
+      more: "More",
+      allSystems: "All systems",
+      searchSystems: "Search systems",
+      noMatchingSystems: "No systems match that search.",
+      catalogError: "Could not load systems.",
     },
     flow: {
       newItem: "New item received",
@@ -891,11 +1099,17 @@ const translations: Record<Lang, Copy> = {
       descriptionLabel: "Descripción",
       cancel: "Cancelar",
       createOpportunity: "Crear oportunidad",
+      newTab: "Encontradas",
+      usedTab: "En uso",
+      newEmpty: "No se encontraron oportunidades.",
+      usedEmpty: "Aún no hay oportunidades en uso.",
+      deleteOpportunity: (title) => `Eliminar ${title}`,
       emptyTitle: "Añade tu primera fuente",
       emptyDescription:
         "Comparte un archivo o conecta un sistema para que Heighliner encuentre oportunidades.",
       addSource: "Añadir una fuente",
       heading: (count) => `Se encontraron ${count} rutas valiosas.`,
+      inUseHeading: (count) => `${count} rutas valiosas en uso.`,
       description:
         "Empieza por la ruta con mayor confianza. Puedes inspeccionar y cambiar cada paso antes de ejecutarlo.",
       recommended: "Recomendada",
@@ -935,11 +1149,19 @@ const translations: Record<Lang, Copy> = {
       backToRoutes: "Volver a rutas",
       pastExecutions: "Ejecuciones",
       completedStatus: "Completada",
+      failedStatus: "Error",
+      fixRoute: "Corregir ruta",
       reviewStatus: "Revisada",
       justNow: "Ahora mismo",
       stepProgress: (step, total) => `Ejecutando paso ${step} de ${total}`,
       activeRoutes: (count) =>
         `${count} ruta${count === 1 ? "" : "s"} activa${count === 1 ? "" : "s"}`,
+      deleteRoute: (title) => `Eliminar ${title}`,
+      deleteRouteTitle: (title) => `¿Eliminar ${title}?`,
+      deleteRouteDescription:
+        "Esta ruta y su historial de ejecuciones se eliminarán permanentemente.",
+      cancelDelete: "Cancelar",
+      confirmDelete: "Eliminar ruta",
     },
     review: {
       title: "Confirma la mejor coincidencia",
@@ -968,6 +1190,11 @@ const translations: Record<Lang, Copy> = {
       cancel: "Cancelar",
       connect: "Conectar",
       disconnect: "Desconectar",
+      more: "Más",
+      allSystems: "Todos los sistemas",
+      searchSystems: "Buscar sistemas",
+      noMatchingSystems: "Ningún sistema coincide con esa búsqueda.",
+      catalogError: "No se pudieron cargar los sistemas.",
     },
     flow: {
       newItem: "Nuevo elemento recibido",
@@ -1059,11 +1286,17 @@ const translations: Record<Lang, Copy> = {
       descriptionLabel: "Beschrijving",
       cancel: "Annuleren",
       createOpportunity: "Kans maken",
+      newTab: "Gevonden",
+      usedTab: "In gebruik",
+      newEmpty: "Geen kansen gevonden.",
+      usedEmpty: "Nog geen kansen in gebruik.",
+      deleteOpportunity: (title) => `${title} verwijderen`,
       emptyTitle: "Voeg je eerste bron toe",
       emptyDescription:
         "Deel een bestand of koppel een systeem zodat Heighliner kansen voor je kan vinden.",
       addSource: "Bron toevoegen",
       heading: (count) => `${count} waardevolle routes gevonden.`,
+      inUseHeading: (count) => `${count} waardevolle routes in gebruik.`,
       description:
         "Begin met de route met de hoogste betrouwbaarheid. Je kunt elke stap bekijken en aanpassen voordat je hem uitvoert.",
       recommended: "Aanbevolen",
@@ -1102,11 +1335,19 @@ const translations: Record<Lang, Copy> = {
       backToRoutes: "Terug naar routes",
       pastExecutions: "Runs",
       completedStatus: "Voltooid",
+      failedStatus: "Fout",
+      fixRoute: "Route herstellen",
       reviewStatus: "Beoordeeld",
       justNow: "Zojuist",
       stepProgress: (step, total) => `Stap ${step} van ${total} uitvoeren`,
       activeRoutes: (count) =>
         `${count} actieve ${count === 1 ? "route" : "routes"}`,
+      deleteRoute: (title) => `${title} verwijderen`,
+      deleteRouteTitle: (title) => `${title} verwijderen?`,
+      deleteRouteDescription:
+        "Deze route en de uitvoeringsgeschiedenis worden permanent verwijderd.",
+      cancelDelete: "Annuleren",
+      confirmDelete: "Route verwijderen",
     },
     review: {
       title: "Bevestig de beste match",
@@ -1135,6 +1376,11 @@ const translations: Record<Lang, Copy> = {
       cancel: "Annuleren",
       connect: "Koppelen",
       disconnect: "Ontkoppelen",
+      more: "Meer",
+      allSystems: "Alle systemen",
+      searchSystems: "Systemen zoeken",
+      noMatchingSystems: "Geen systemen komen overeen met die zoekopdracht.",
+      catalogError: "Systemen konden niet worden geladen.",
     },
     flow: {
       newItem: "Nieuw item ontvangen",
@@ -2256,11 +2502,7 @@ function Landing({ explore }: { explore: () => void }) {
                       >
                         {copy.submit}
                         {inquiryState === "submitting" ? (
-                          <HugeiconsIcon
-                            icon={Loading01Icon}
-                            size={14}
-                            className="animate-spin"
-                          />
+                          <LoadingOrb state="solving" theme="dark" />
                         ) : (
                           <HugeiconsIcon icon={ArrowRight01Icon} size={14} />
                         )}
@@ -2391,15 +2633,20 @@ function LanguageSwitcher() {
   );
 }
 
-function SystemMark({ name }: { name: string }) {
-  const logo = integrationLogos[name];
+function SystemMark({ name, logo }: { name: string; logo?: string }) {
+  const src = integrationLogos[name] ?? logo;
+  const [loadedSrc, setLoadedSrc] = useState("");
   return (
     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] bg-white shadow-[inset_0_0_0_1px_rgba(0,0,0,.06)]">
-      {logo ? (
-        <img src={logo} alt="" className="h-5 w-5 object-contain" />
-      ) : (
-        <HugeiconsIcon icon={Mail01Icon} className="text-[#555550]" size={16} />
-      )}
+      {src ? (
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          className={`h-5 w-5 object-contain ${loadedSrc === src ? "" : "invisible"}`}
+          onLoad={() => setLoadedSrc(src)}
+        />
+      ) : null}
     </span>
   );
 }
@@ -2715,27 +2962,27 @@ function ShellHeader({
   backLabel?: string;
 }) {
   return (
-    <header className="sticky top-0 z-20 flex h-[82px] items-center justify-between bg-[#f7f7f5]/82 px-8 backdrop-blur-xl lg:px-10">
-      <div className="flex items-center gap-3">
-        {back && (
-          <button
-            onClick={back}
-            aria-label={backLabel}
-            className="pressable grid h-9 w-9 place-items-center rounded-full bg-black/[.055] text-[#555550] hover:bg-black/[.08]"
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={15} />
-          </button>
+    <header className="sticky top-0 z-20 flex h-[82px] w-full min-w-0 items-center gap-3 bg-[#f7f7f5]/82 px-5 backdrop-blur-xl">
+      {back && (
+        <button
+          onClick={back}
+          aria-label={backLabel}
+          className="pressable grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#555550] hover:bg-black/[.08]"
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={15} />
+        </button>
+      )}
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <h1 className="truncate text-[19px] font-semibold tracking-[-.035em]">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="mt-1 truncate text-[11px] text-[#898984]">{subtitle}</p>
         )}
-        <div>
-          <h1 className="text-[19px] font-semibold tracking-[-.035em]">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="mt-1 text-[11px] text-[#898984]">{subtitle}</p>
-          )}
-        </div>
       </div>
-      {action}
+      {action && (
+        <div className="flex shrink-0 items-center gap-2">{action}</div>
+      )}
     </header>
   );
 }
@@ -2743,22 +2990,33 @@ function ShellHeader({
 function OpportunityList({
   opportunities,
   creating,
+  error,
   create,
+  remove,
   addSource,
   createManual,
 }: {
   opportunities: Opportunity[];
   creating: string | null;
+  error?: string;
   create: (o: Opportunity) => void;
+  remove: (o: Opportunity) => Promise<void>;
   addSource: () => void;
   createManual: (title: string, description: string) => Promise<void>;
 }) {
   const { copy } = useLocale();
+  const [tab, setTab] = useState<"new" | "used">("new");
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [manualBusy, setManualBusy] = useState(false);
   const [manualError, setManualError] = useState("");
+  const visibleOpportunities = opportunities.filter((opportunity) =>
+    tab === "used"
+      ? opportunity.status === "converted"
+      : opportunity.status !== "converted",
+  );
   const action = (
     <Button onClick={() => setManualOpen(true)}>
       <HugeiconsIcon icon={Add01Icon} size={14} />
@@ -2846,13 +3104,7 @@ function OpportunityList({
             type="submit"
             disabled={manualBusy || !title.trim() || !description.trim()}
           >
-            {manualBusy && (
-              <HugeiconsIcon
-                icon={Loading01Icon}
-                className="animate-spin"
-                size={13}
-              />
-            )}
+            {manualBusy && <LoadingOrb state="composing" theme="dark" />}
             {copy.opportunities.createOpportunity}
           </Button>
         </div>
@@ -2891,147 +3143,202 @@ function OpportunityList({
         action={action}
       />
       <div className="mx-auto max-w-[1120px] px-8 py-10 lg:px-10">
+        {error && (
+          <p
+            role="alert"
+            className="mb-5 rounded-[14px] bg-red-50 px-4 py-3 text-[11px] text-red-700"
+          >
+            {error}
+          </p>
+        )}
         <div className="mb-10">
           <h2 className="text-[38px] font-semibold tracking-[-.05em]">
-            {copy.opportunities.heading(opportunities.length)}
+            {tab === "new"
+              ? copy.opportunities.heading(visibleOpportunities.length)
+              : copy.opportunities.inUseHeading(visibleOpportunities.length)}
           </h2>
           <p className="mt-3 max-w-xl text-[14px] leading-6 text-[#777772]">
             {copy.opportunities.description}
           </p>
         </div>
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <div className="space-y-3">
-            {opportunities.map((o, i) => (
-              <motion.article
-                key={o.id}
-                id={`opportunity-${o.id}`}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ ...spring, delay: i * 0.035 }}
-                className="group scroll-m-6 rounded-[22px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)]"
-              >
-                <div className="flex items-stretch gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[15px] font-semibold tracking-[-.02em]">
-                        {o.title}
-                      </h3>
-                      {i === 0 && (
-                        <span className="rounded-full bg-[#fff0e8] px-2 py-1 text-[9px] font-semibold text-[#c84f1b]">
-                          {copy.opportunities.recommended}
+        <div
+          role="tablist"
+          aria-label={copy.opportunities.title}
+          className="mb-4 inline-flex rounded-[12px] bg-black/[.055] p-1"
+        >
+          {(["new", "used"] as const).map((item) => (
+            <button
+              key={item}
+              role="tab"
+              aria-selected={tab === item}
+              onClick={() => setTab(item)}
+              className={`pressable min-w-[88px] rounded-[9px] px-4 py-2 text-[11px] font-semibold transition ${tab === item ? "bg-white text-[#292927] shadow-sm" : "text-[#858580] hover:text-[#555550]"}`}
+            >
+              {item === "new"
+                ? copy.opportunities.newTab
+                : copy.opportunities.usedTab}
+            </button>
+          ))}
+        </div>
+        {!visibleOpportunities.length ? (
+          <div className="rounded-[22px] bg-white px-6 py-16 text-center text-[13px] text-[#81817c] shadow-[0_1px_2px_rgba(0,0,0,.03)]">
+            {tab === "new"
+              ? copy.opportunities.newEmpty
+              : copy.opportunities.usedEmpty}
+          </div>
+        ) : (
+          <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="space-y-3">
+              {visibleOpportunities.map((o, i) => (
+                <motion.article
+                  key={o.id}
+                  id={`opportunity-${o.id}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ ...spring, delay: i * 0.035 }}
+                  className="group scroll-m-6 rounded-[22px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)]"
+                >
+                  <div className="flex items-stretch gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[15px] font-semibold tracking-[-.02em]">
+                          {o.title}
+                        </h3>
+                        {i === 0 && (
+                          <span className="rounded-full bg-[#fff0e8] px-2 py-1 text-[9px] font-semibold text-[#c84f1b]">
+                            {copy.opportunities.recommended}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-[11px] leading-5 text-[#777772]">
+                        {o.description}
+                      </p>
+                      <p className="mt-3 text-[10px] text-[#999994]">
+                        <span className="font-medium text-[#686863]">
+                          {copy.opportunities.evidence}
+                        </span>{" "}
+                        {o.evidence}
+                      </p>
+                      <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px]">
+                        <span className="rounded-full bg-black/[.045] px-2.5 py-1">
+                          {copy.opportunities.impact[o.impact]}
                         </span>
+                        <span className="rounded-full bg-black/[.045] px-2.5 py-1">
+                          {copy.opportunities.effort[o.effort]}
+                        </span>
+                        <span className="text-[#999994]">
+                          {o.confidence}% {copy.opportunities.confidenceLabel}
+                        </span>
+                        <span className="text-[#999994]">
+                          {o.systems.join(" · ")}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="ml-4 flex flex-col items-end self-stretch text-right">
+                      <div className="flex items-start gap-3">
+                        <button
+                          type="button"
+                          aria-label={copy.opportunities.deleteOpportunity(
+                            o.title,
+                          )}
+                          disabled={deleting === o.id}
+                          onClick={() => {
+                            setDeleting(o.id);
+                            void remove(o).finally(() => setDeleting(null));
+                          }}
+                          className="pressable grid h-8 w-8 place-items-center rounded-full text-[#999994] hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                        >
+                          {deleting === o.id ? (
+                            <LoadingOrb />
+                          ) : (
+                            <HugeiconsIcon icon={Delete02Icon} size={13} />
+                          )}
+                        </button>
+                        <div>
+                          <div className="text-[22px] font-semibold tracking-[-.045em]">
+                            {o.hours}h
+                          </div>
+                          <div className="text-[9px] text-[#999994]">
+                            {copy.opportunities.savedPerWeek}
+                          </div>
+                        </div>
+                      </div>
+                      {o.status !== "converted" && (
+                        <Button
+                          disabled={creating === o.id || deleting === o.id}
+                          onClick={() => create(o)}
+                          className="mt-auto h-9 px-3.5 text-[11px]"
+                        >
+                          {creating === o.id ? (
+                            <LoadingOrb state="solving" theme="dark" />
+                          ) : (
+                            <HugeiconsIcon icon={Add01Icon} size={13} />
+                          )}{" "}
+                          {copy.opportunities.createRoute}
+                        </Button>
                       )}
                     </div>
-                    <p className="mt-1.5 text-[11px] leading-5 text-[#777772]">
-                      {o.description}
-                    </p>
-                    <p className="mt-3 text-[10px] text-[#999994]">
-                      <span className="font-medium text-[#686863]">
-                        {copy.opportunities.evidence}
-                      </span>{" "}
-                      {o.evidence}
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px]">
-                      <span className="rounded-full bg-black/[.045] px-2.5 py-1">
-                        {copy.opportunities.impact[o.impact]}
-                      </span>
-                      <span className="rounded-full bg-black/[.045] px-2.5 py-1">
-                        {copy.opportunities.effort[o.effort]}
-                      </span>
-                      <span className="text-[#999994]">
-                        {o.confidence}% {copy.opportunities.confidenceLabel}
-                      </span>
-                      <span className="text-[#999994]">
-                        {o.systems.join(" · ")}
-                      </span>
-                    </div>
                   </div>
-                  <div className="ml-4 flex flex-col items-end self-stretch text-right">
-                    <div>
-                      <div className="text-[22px] font-semibold tracking-[-.045em]">
-                        {o.hours}h
-                      </div>
-                      <div className="text-[9px] text-[#999994]">
-                        {copy.opportunities.savedPerWeek}
-                      </div>
-                    </div>
-                    <Button
-                      disabled={creating === o.id}
-                      onClick={() => create(o)}
-                      className="mt-auto h-9 px-3.5 text-[11px]"
+                </motion.article>
+              ))}
+            </div>
+            <section className="sticky top-[102px] rounded-[24px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)]">
+              <div className="flex items-center justify-between px-5 pt-5">
+                <h3 className="text-[12px] font-semibold tracking-[-.02em]">
+                  {copy.opportunities.mapTitle}
+                </h3>
+                <span className="flex items-center gap-1.5 text-[8px] text-[#999994]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#e45e20]" />
+                  {copy.opportunities.recommended}
+                </span>
+              </div>
+              <div className="relative mx-5 mb-5 mt-4 aspect-square rounded-[18px] bg-black/[.025]">
+                <div className="absolute inset-x-4 top-1/2 h-px bg-black/[.065]" />
+                <div className="absolute inset-y-4 left-1/2 w-px bg-black/[.065]" />
+                <span className="absolute left-3 top-3 text-[8px] font-medium text-[#8c8c87]">
+                  {copy.opportunities.highAxis} {copy.opportunities.impactAxis}
+                </span>
+                <span className="absolute bottom-3 left-3 text-[8px] font-medium text-[#aaa9a4]">
+                  {copy.opportunities.lowAxis} {copy.opportunities.impactAxis}
+                </span>
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-medium text-[#aaa9a4]">
+                  {copy.opportunities.lowAxis} {copy.opportunities.effortAxis}
+                </span>
+                <span className="absolute bottom-3 right-3 text-[8px] font-medium text-[#aaa9a4]">
+                  {copy.opportunities.highAxis} {copy.opportunities.effortAxis}
+                </span>
+                {visibleOpportunities.map((opportunity, index) => {
+                  const x =
+                    (opportunity.effort === "Low" ? 27 : 67) +
+                    ((index % 3) - 1) * 7;
+                  const y =
+                    (opportunity.impact === "High" ? 27 : 66) +
+                    ((Math.floor(index / 3) % 3) - 1) * 5;
+                  return (
+                    <button
+                      key={opportunity.id}
+                      onClick={() =>
+                        document
+                          .getElementById(`opportunity-${opportunity.id}`)
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          })
+                      }
+                      aria-label={opportunity.title}
+                      className={`group absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_4px_rgba(255,255,255,.8)] outline-none transition-transform hover:scale-125 focus-visible:scale-125 ${index === 0 ? "bg-[#e45e20]" : "bg-[#4f4f4a]"}`}
+                      style={{ left: `${x}%`, top: `${y}%` }}
                     >
-                      {creating === o.id ? (
-                        <HugeiconsIcon
-                          icon={Loading01Icon}
-                          className="animate-spin"
-                          size={13}
-                        />
-                      ) : (
-                        <HugeiconsIcon icon={Add01Icon} size={13} />
-                      )}{" "}
-                      {copy.opportunities.createRoute}
-                    </Button>
-                  </div>
-                </div>
-              </motion.article>
-            ))}
+                      <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-[180px] -translate-x-1/2 translate-y-1 scale-95 rounded-[10px] bg-[#20201e] px-2.5 py-1.5 text-[9px] font-medium text-white opacity-0 shadow-lg transition duration-150 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:scale-100 group-focus-visible:opacity-100">
+                        {opportunity.title}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           </div>
-          <section className="sticky top-[102px] rounded-[24px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)]">
-            <div className="flex items-center justify-between px-5 pt-5">
-              <h3 className="text-[12px] font-semibold tracking-[-.02em]">
-                {copy.opportunities.mapTitle}
-              </h3>
-              <span className="flex items-center gap-1.5 text-[8px] text-[#999994]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#e45e20]" />
-                {copy.opportunities.recommended}
-              </span>
-            </div>
-            <div className="relative mx-5 mb-5 mt-4 aspect-square rounded-[18px] bg-black/[.025]">
-              <div className="absolute inset-x-4 top-1/2 h-px bg-black/[.065]" />
-              <div className="absolute inset-y-4 left-1/2 w-px bg-black/[.065]" />
-              <span className="absolute left-3 top-3 text-[8px] font-medium text-[#8c8c87]">
-                {copy.opportunities.highAxis} {copy.opportunities.impactAxis}
-              </span>
-              <span className="absolute bottom-3 left-3 text-[8px] font-medium text-[#aaa9a4]">
-                {copy.opportunities.lowAxis} {copy.opportunities.impactAxis}
-              </span>
-              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[8px] font-medium text-[#aaa9a4]">
-                {copy.opportunities.lowAxis} {copy.opportunities.effortAxis}
-              </span>
-              <span className="absolute bottom-3 right-3 text-[8px] font-medium text-[#aaa9a4]">
-                {copy.opportunities.highAxis} {copy.opportunities.effortAxis}
-              </span>
-              {opportunities.map((opportunity, index) => {
-                const x =
-                  (opportunity.effort === "Low" ? 27 : 67) +
-                  ((index % 3) - 1) * 7;
-                const y =
-                  (opportunity.impact === "High" ? 27 : 66) +
-                  ((Math.floor(index / 3) % 3) - 1) * 5;
-                return (
-                  <button
-                    key={opportunity.id}
-                    onClick={() =>
-                      document
-                        .getElementById(`opportunity-${opportunity.id}`)
-                        ?.scrollIntoView({
-                          behavior: "smooth",
-                          block: "center",
-                        })
-                    }
-                    aria-label={opportunity.title}
-                    className={`group absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_4px_rgba(255,255,255,.8)] outline-none transition-transform hover:scale-125 focus-visible:scale-125 ${index === 0 ? "bg-[#e45e20]" : "bg-[#4f4f4a]"}`}
-                    style={{ left: `${x}%`, top: `${y}%` }}
-                  >
-                    <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-[180px] -translate-x-1/2 translate-y-1 scale-95 rounded-[10px] bg-[#20201e] px-2.5 py-1.5 text-[9px] font-medium text-white opacity-0 shadow-lg transition duration-150 group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:scale-100 group-focus-visible:opacity-100">
-                      {opportunity.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </div>
+        )}
       </div>
       {manualDialog}
     </div>
@@ -3039,13 +3346,18 @@ function OpportunityList({
 }
 
 function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
-  const Icon = {
-    system: BoxesIcon,
-    ai: BotIcon,
-    knowledge: Folder01Icon,
-    logic: GitBranchIcon,
-    human: UserCheck01Icon,
-  }[data.kind];
+  const Icon =
+    data.action === "read_files"
+      ? Upload01Icon
+      : data.action === "create_file"
+        ? File01Icon
+        : {
+            system: BoxesIcon,
+            ai: BotIcon,
+            knowledge: Folder01Icon,
+            logic: GitBranchIcon,
+            human: UserCheck01Icon,
+          }[data.kind];
   const logo = data.integration && integrationLogos[data.integration];
   const tones = {
     system: "bg-[#ececea]",
@@ -3083,16 +3395,33 @@ function FlowNode({ data, selected }: NodeProps<Node<FlowData>>) {
           />
         )}
         {data.status === "running" && (
-          <HugeiconsIcon
-            icon={Loading01Icon}
-            size={14}
-            className="ml-auto animate-spin text-[#e45e20]"
-          />
+          <LoadingOrb state="solving" className="ml-auto" />
         )}
       </div>
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
+}
+
+function routeStepAlias(
+  step: Pick<RouteStep, "label" | "action">,
+  systems: string[],
+) {
+  const raw = step.label.trim();
+  if (!raw.includes("_") && raw !== step.action) return raw;
+  if (step.action === "read_sources" || raw.startsWith("read_sources"))
+    return systems.includes("Gmail") ? "Read emails" : "Read source data";
+  if (step.action === "read_files" || raw.startsWith("read_files"))
+    return "Input files";
+  if (step.action === "create_file" || raw.startsWith("create_file"))
+    return "Output file";
+
+  const words = raw
+    .replace(/^ai_transform_?/, "")
+    .replaceAll("_", " ")
+    .trim();
+  if (!words) return "Transform data";
+  return words[0].toUpperCase() + words.slice(1);
 }
 
 function makeFlow(
@@ -3109,7 +3438,13 @@ function makeFlow(
     Object.keys(integrationLogos).find((name) =>
       `${label} ${detail}`.includes(name),
     );
-  const defaultSteps: [string, string, FlowData["kind"], string?][] = [
+  const defaultSteps: [
+    string,
+    string,
+    FlowData["kind"],
+    string?,
+    RouteStep["action"]?,
+  ][] = [
     [system, flowCopy.newItem, "system", system],
     [flowCopy.collectContext, flowCopy.readSourceData, "knowledge"],
     [
@@ -3133,12 +3468,26 @@ function makeFlow(
     ],
   ];
   const labels = route.steps?.length
-    ? route.steps.map((step): [string, string, FlowData["kind"], string?] => [
-        step.label,
-        step.detail,
-        step.kind,
-        findIntegration(step.label, step.detail),
-      ])
+    ? route.steps.map(
+        (
+          step,
+        ): [
+          string,
+          string,
+          FlowData["kind"],
+          string | undefined,
+          RouteStep["action"],
+        ] => [
+          routeStepAlias(step, route.systems),
+          step.detail,
+          step.kind,
+          findIntegration(step.label, step.detail) ||
+            (step.action === "read_sources"
+              ? route.systems.find((system) => integrationLogos[system])
+              : undefined),
+          step.action,
+        ],
+      )
     : defaultSteps;
   if (route.steps?.length) {
     const nodes: Node<FlowData>[] = labels.map((item, index) => ({
@@ -3150,6 +3499,7 @@ function makeFlow(
         detail: item[1],
         kind: item[2],
         integration: item[3],
+        action: item[4],
       },
     }));
     return {
@@ -3226,12 +3576,14 @@ function Routes({
   selectedId,
   setSelected,
   updateRoute,
+  removeRoute,
   showOpportunities,
 }: {
   routes: RouteData[];
   selectedId?: string;
   setSelected: (id?: string) => void;
   updateRoute: (route: RouteData) => void;
+  removeRoute: (route: RouteData) => Promise<boolean>;
   showOpportunities: () => void;
 }) {
   const { copy, lang } = useLocale();
@@ -3239,7 +3591,16 @@ function Routes({
   const [step, setStep] = useState(0);
   const [inspected, setInspected] = useState<Node<FlowData> | null>(null);
   const [review, setReview] = useState(false);
-  const [runStartedAt, setRunStartedAt] = useState<number>();
+  const [runningServer, setRunningServer] = useState(false);
+  const [generatingRoute, setGeneratingRoute] = useState(false);
+  const [deletingRoute, setDeletingRoute] = useState(false);
+  const [confirmingDeleteRouteId, setConfirmingDeleteRouteId] = useState<
+    string | null
+  >(null);
+  const [runError, setRunError] = useState("");
+  const [pendingExecution, setPendingExecution] = useState<RouteExecution>();
+  const [inputFiles, setInputFiles] = useState<File[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [historyWidth, setHistoryWidth] = useState(360);
   const [selectedExecutionId, setSelectedExecutionId] = useState<string>();
   const [sideTab, setSideTab] = useState<"chat" | "history">("history");
@@ -3248,9 +3609,7 @@ function Routes({
   const [chatMessages, setChatMessages] = useState<
     { role: "user" | "assistant"; text: string }[]
   >([]);
-  const [executions, setExecutions] = useState<
-    { id: string; time: string; duration: string; reviewed: boolean }[]
-  >([]);
+  const [executions, setExecutions] = useState<RouteExecution[]>([]);
   const selectedExecution = executions.find(
     (execution) => execution.id === selectedExecutionId,
   );
@@ -3265,22 +3624,46 @@ function Routes({
     setStep(0);
     setReview(false);
     setInspected(null);
-    setRunStartedAt(undefined);
+    setRunError("");
+    setPendingExecution(undefined);
+    setInputFiles([]);
     setSideTab("history");
     setChatInput("");
     setChatMessages([]);
     setSelectedExecutionId(undefined);
-    setExecutions(
-      selected
-        ? executionTimesByLang[lang].map((time, index) => ({
-            id: `${selected.id}-${index + 1}`,
-            time,
-            duration: ["1m 34s", "2m 06s", "1m 41s", "1m 52s"][index],
-            reviewed: index === 1,
-          }))
-        : [],
-    );
+    setExecutions(selected?.executions || []);
   }, [selected?.id, lang]);
+  useEffect(() => {
+    const createsFile = selected?.steps?.at(-1)?.action === "create_file";
+    const executable =
+      selected?.steps?.length &&
+      ["read_sources", "read_files"].includes(selected.steps[0].action || "") &&
+      selected.steps
+        .slice(1, createsFile ? -1 : undefined)
+        .every((step) => step.action === "ai_transform");
+    if (!selected || executable || !/^\d+$/.test(selected.id)) return;
+    let active = true;
+    setGeneratingRoute(true);
+    void fetch(`/api/routes/${selected.id}/generate`, { method: "POST" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok)
+          throw new Error(result.error || "Route generation failed");
+        if (active) updateRoute(result.route);
+      })
+      .catch((error) => {
+        if (active)
+          setRunError(
+            error instanceof Error ? error.message : "Route generation failed",
+          );
+      })
+      .finally(() => {
+        if (active) setGeneratingRoute(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [selected?.id, selected?.steps?.length]);
   const sendEdit = async (event: React.FormEvent) => {
     event.preventDefault();
     const message = chatInput.trim();
@@ -3321,38 +3704,111 @@ function Routes({
       setChatting(false);
     }
   };
-  useEffect(() => {
-    if (step !== completeStep || !runStartedAt) return;
-    const id = String(runStartedAt);
-    setExecutions((current) =>
-      current.some((execution) => execution.id === id)
-        ? current
-        : [
-            {
-              id,
-              time: copy.routes.justNow,
-              duration: "1m 34s",
-              reviewed: true,
-            },
-            ...current,
-          ],
-    );
-  }, [step, completeStep, runStartedAt, copy.routes.justNow]);
+  const runRoute = async () => {
+    if (!selected) return;
+    const startedAt = Date.now();
+    const optimisticExecution: RouteExecution = {
+      id: `running-${startedAt}`,
+      status: "running",
+      output: "",
+      durationMs: 0,
+      createdAt: new Date(startedAt).toISOString(),
+      completedSteps: [],
+    };
+    setInspected(null);
+    setRunError("");
+    setPendingExecution(undefined);
+    setStep(1);
+    if (!/^\d+$/.test(selected.id)) return;
+    setSideTab("history");
+    setSelectedExecutionId(undefined);
+    setExecutions((current) => [optimisticExecution, ...current]);
+    setRunningServer(true);
+    let returnedExecution: RouteExecution | undefined;
+    try {
+      const body = new FormData();
+      inputFiles.forEach((file) => body.append("files", file));
+      const response = await fetch(`/api/routes/${selected.id}/run`, {
+        method: "POST",
+        body,
+      });
+      const result = await response.json();
+      returnedExecution = result.execution;
+      if (!response.ok) throw new Error(result.error || "Route run failed");
+      if (returnedExecution)
+        setExecutions((current) =>
+          current.map((execution) =>
+            execution.id === optimisticExecution.id
+              ? { ...returnedExecution!, status: "running" }
+              : execution,
+          ),
+        );
+      setPendingExecution(result.execution);
+      setInputFiles([]);
+      if (inputRef.current) inputRef.current.value = "";
+      updateRoute({
+        ...selected,
+        executions: [result.execution, ...(selected.executions || [])],
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "The route could not run.";
+      const failedExecution =
+        returnedExecution ||
+        ({
+          ...optimisticExecution,
+          status: "failed",
+          output: message,
+          durationMs: Date.now() - startedAt,
+        } satisfies RouteExecution);
+      setStep(0);
+      setPendingExecution(undefined);
+      setRunError(message);
+      setExecutions((current) =>
+        current.map((execution) =>
+          execution.id === optimisticExecution.id ? failedExecution : execution,
+        ),
+      );
+      updateRoute({
+        ...selected,
+        executions: [failedExecution, ...(selected.executions || [])],
+      });
+    } finally {
+      setRunningServer(false);
+    }
+  };
   useEffect(() => {
     if (!step || step >= completeStep || review) return;
+    if (runningServer) return;
     if (flow?.nodes[step - 1]?.data.kind === "human") {
       setReview(true);
       return;
     }
     const timer = setTimeout(() => setStep((v) => v + 1), 760);
     return () => clearTimeout(timer);
-  }, [step, completeStep, review, flow]);
+  }, [step, completeStep, review, flow, runningServer]);
+  useEffect(() => {
+    if (step !== completeStep || !pendingExecution) return;
+    setExecutions((current) =>
+      current.some((execution) => execution.id === pendingExecution.id)
+        ? current.map((execution) =>
+            execution.id === pendingExecution.id ? pendingExecution : execution,
+          )
+        : [pendingExecution, ...current],
+    );
+    setSelectedExecutionId(pendingExecution.id);
+    setPendingExecution(undefined);
+  }, [step, completeStep, pendingExecution]);
   const nodes = useMemo(
     () =>
       flow?.nodes.map((n) => ({
         ...n,
         data: {
           ...n.data,
+          detail:
+            n.data.action === "read_files" && inputFiles.length
+              ? `${inputFiles.length} ${inputFiles.length === 1 ? "file" : "files"} selected`
+              : n.data.detail,
           status:
             step > Number(n.id)
               ? ("done" as const)
@@ -3361,8 +3817,75 @@ function Routes({
                 : ("idle" as const),
         },
       })) || [],
-    [flow, step],
+    [flow, step, inputFiles.length],
   );
+  const renderDeleteDialog = () => {
+    const route = confirmingDeleteRouteId
+      ? routes.find((item) => item.id === confirmingDeleteRouteId)
+      : undefined;
+    if (!route) return null;
+    return (
+      <div
+        className="fixed inset-0 z-[60] grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget && !deletingRoute)
+            setConfirmingDeleteRouteId(null);
+        }}
+      >
+        <motion.section
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-route-title"
+          aria-describedby="delete-route-description"
+          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={spring}
+          className="w-full max-w-[420px] rounded-[24px] bg-white p-6 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+        >
+          <h2
+            id="delete-route-title"
+            className="text-[21px] font-semibold tracking-[-.035em]"
+          >
+            {copy.routes.deleteRouteTitle(route.title)}
+          </h2>
+          <p
+            id="delete-route-description"
+            className="mt-2 text-[12px] leading-5 text-[#777772]"
+          >
+            {copy.routes.deleteRouteDescription}
+          </p>
+          <div className="mt-6 flex justify-end gap-2">
+            <Button
+              secondary
+              disabled={deletingRoute}
+              onClick={() => setConfirmingDeleteRouteId(null)}
+            >
+              {copy.routes.cancelDelete}
+            </Button>
+            <button
+              type="button"
+              disabled={deletingRoute}
+              onClick={() => {
+                setDeletingRoute(true);
+                void removeRoute(route)
+                  .then((deleted) => {
+                    if (deleted) {
+                      setConfirmingDeleteRouteId(null);
+                      if (selected?.id === route.id) setSelected(undefined);
+                    }
+                  })
+                  .finally(() => setDeletingRoute(false));
+              }}
+              className="pressable inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-[13px] font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {deletingRoute && <LoadingOrb theme="dark" />}
+              {copy.routes.confirmDelete}
+            </button>
+          </div>
+        </motion.section>
+      </div>
+    );
+  };
   if (!selected && routes.length > 0)
     return (
       <div className="min-h-screen">
@@ -3373,13 +3896,13 @@ function Routes({
         <div className="mx-auto max-w-[1040px] px-8 py-10 lg:px-10">
           <div className="grid gap-4 md:grid-cols-2">
             {routes.map((route, index) => (
-              <motion.button
+              <motion.article
                 key={route.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: index * 0.04 }}
                 onClick={() => setSelected(route.id)}
-                className="pressable group rounded-[24px] bg-white p-5 text-left shadow-[0_1px_2px_rgba(0,0,0,.03),0_12px_35px_rgba(0,0,0,.035)] transition-shadow hover:shadow-[0_2px_3px_rgba(0,0,0,.04),0_18px_45px_rgba(0,0,0,.06)]"
+                className="pressable group cursor-pointer rounded-[24px] bg-white p-5 text-left shadow-[0_1px_2px_rgba(0,0,0,.03),0_12px_35px_rgba(0,0,0,.035)] transition-shadow hover:shadow-[0_2px_3px_rgba(0,0,0,.04),0_18px_45px_rgba(0,0,0,.06)]"
               >
                 <div className="flex items-start justify-between">
                   <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#fff0e8] text-[#d8551d]">
@@ -3421,7 +3944,7 @@ function Routes({
                 <div className="mt-6 grid grid-cols-3 rounded-[16px] bg-black/[.035] px-4 py-3">
                   <div>
                     <span className="block text-[15px] font-semibold">
-                      {18 + index * 7}
+                      {recentRuns(route)}
                     </span>
                     <span className="text-[9px] text-[#92928d]">
                       {copy.routes.runsThisWeek}
@@ -3429,7 +3952,7 @@ function Routes({
                   </div>
                   <div>
                     <span className="block text-[15px] font-semibold">
-                      {96 - index}%
+                      {successRate(route)}
                     </span>
                     <span className="text-[9px] text-[#92928d]">
                       {copy.routes.success}
@@ -3444,14 +3967,29 @@ function Routes({
                     </span>
                   </div>
                 </div>
-                <span className="mt-5 flex items-center justify-end gap-1 text-[10px] font-semibold text-[#686863] opacity-0 transition group-hover:opacity-100">
-                  {copy.routes.openRoute}{" "}
-                  <HugeiconsIcon icon={ChevronRightIcon} size={12} />
-                </span>
-              </motion.button>
+                <div className="mt-5 flex items-center justify-between opacity-0 transition group-hover:opacity-100">
+                  <button
+                    type="button"
+                    aria-label={copy.routes.deleteRoute(route.title)}
+                    disabled={deletingRoute}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setConfirmingDeleteRouteId(route.id);
+                    }}
+                    className="pressable grid h-8 w-8 place-items-center rounded-full text-[#999994] hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  >
+                    <HugeiconsIcon icon={Delete02Icon} size={13} />
+                  </button>
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-[#686863]">
+                    {copy.routes.openRoute}{" "}
+                    <HugeiconsIcon icon={ChevronRightIcon} size={12} />
+                  </span>
+                </div>
+              </motion.article>
             ))}
           </div>
         </div>
+        {renderDeleteDialog()}
       </div>
     );
   if (!selected)
@@ -3489,34 +4027,52 @@ function Routes({
           back={() => setSelected(undefined)}
           backLabel={copy.routes.backToRoutes}
           action={
-            <Button
-              onClick={() => {
-                setInspected(null);
-                setRunStartedAt(Date.now());
-                setStep(1);
-              }}
-              disabled={step > 0 && step < completeStep}
-            >
-              {step > 0 && step < completeStep ? (
-                <>
-                  <HugeiconsIcon
-                    icon={Loading01Icon}
-                    size={14}
-                    className="animate-spin"
-                  />{" "}
-                  {copy.routes.running}
-                </>
-              ) : (
-                <>
-                  <HugeiconsIcon
-                    icon={PlayIcon}
-                    size={13}
-                    fill="currentColor"
-                  />{" "}
-                  {copy.routes.runRoute}
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                aria-label={copy.routes.deleteRoute(selected.title)}
+                disabled={deletingRoute || generatingRoute || runningServer}
+                onClick={() => setConfirmingDeleteRouteId(selected.id)}
+                className="pressable grid h-10 w-10 place-items-center rounded-full bg-black/[.055] text-[#777772] hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+              >
+                {deletingRoute ? (
+                  <LoadingOrb />
+                ) : (
+                  <HugeiconsIcon icon={Delete02Icon} size={14} />
+                )}
+              </button>
+              <Button
+                onClick={() => void runRoute()}
+                className="whitespace-nowrap"
+                disabled={
+                  deletingRoute ||
+                  generatingRoute ||
+                  runningServer ||
+                  (step > 0 && step < completeStep)
+                }
+              >
+                {generatingRoute ||
+                runningServer ||
+                (step > 0 && step < completeStep) ? (
+                  <>
+                    <LoadingOrb
+                      state={generatingRoute ? "weaving" : "solving"}
+                      theme="dark"
+                    />{" "}
+                    {copy.routes.running}
+                  </>
+                ) : (
+                  <>
+                    <HugeiconsIcon
+                      icon={PlayIcon}
+                      size={13}
+                      fill="currentColor"
+                    />{" "}
+                    {copy.routes.runRoute}
+                  </>
+                )}
+              </Button>
+            </div>
           }
         />
         <div className="relative h-[calc(100vh-82px)] min-w-0">
@@ -3560,9 +4116,36 @@ function Routes({
                   <div className="text-[10px] font-medium">
                     {copy.flow.configuration}
                   </div>
-                  <p className="mt-2 text-[10px] leading-5 text-[#777772]">
-                    {copy.flow.usesConnectedAccount(selected.systems[0])}
-                  </p>
+                  {inspected.data.action === "read_files" ? (
+                    <>
+                      <input
+                        ref={inputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(event) =>
+                          setInputFiles(Array.from(event.target.files || []))
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => inputRef.current?.click()}
+                        disabled={runningServer}
+                        className="pressable mt-3 flex w-full items-center justify-center gap-2 rounded-[12px] bg-white px-3 py-2.5 text-[10px] font-medium shadow-sm disabled:opacity-40"
+                      >
+                        <HugeiconsIcon icon={Upload01Icon} size={13} />
+                        {inputFiles.length
+                          ? `${inputFiles.length} ${inputFiles.length === 1 ? "file" : "files"} selected`
+                          : "Choose input files"}
+                      </button>
+                    </>
+                  ) : (
+                    <p className="mt-2 text-[10px] leading-5 text-[#777772]">
+                      {inspected.data.action === "create_file"
+                        ? "Creates a downloadable Markdown file."
+                        : copy.flow.usesConnectedAccount(selected.systems[0])}
+                    </p>
+                  )}
                 </div>
                 {Number(inspected.id) < step && (
                   <div className="mt-3 rounded-[16px] bg-[#edf6ef] p-4">
@@ -3593,6 +4176,11 @@ function Routes({
                   ? copy.routes.waitingForReview
                   : copy.routes.stepProgress(step, nodes.length)}
             </motion.div>
+          )}
+          {runError && (
+            <div className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2 rounded-full bg-red-600 px-4 py-2.5 text-[10px] font-medium text-white shadow-lg">
+              {runError}
+            </div>
           )}
           {review && (
             <ReviewSheet
@@ -3688,11 +4276,7 @@ function Routes({
                   ))}
                   {chatting && (
                     <div className="flex w-fit items-center gap-2 rounded-[16px] rounded-tl-[5px] bg-black/[.045] px-3.5 py-3 text-[10px] text-[#777772]">
-                      <HugeiconsIcon
-                        icon={Loading01Icon}
-                        size={12}
-                        className="animate-spin"
-                      />
+                      <LoadingOrb state="listening" />
                       {copy.routes.running}
                     </div>
                   )}
@@ -3708,9 +4292,9 @@ function Routes({
                           event.currentTarget.form?.requestSubmit();
                         }
                       }}
-                      rows={1}
+                      rows={3}
                       placeholder={chatCopy.placeholder}
-                      className="max-h-28 min-h-8 min-w-0 flex-1 resize-none bg-transparent py-1.5 text-[11px] outline-none placeholder:text-[#aaa9a4]"
+                      className="max-h-36 min-h-16 min-w-0 flex-1 resize-none bg-transparent py-2 text-[12px] leading-5 outline-none placeholder:text-[#aaa9a4]"
                     />
                     <button
                       type="submit"
@@ -3739,51 +4323,105 @@ function Routes({
                   <HugeiconsIcon icon={ArrowLeft01Icon} size={12} />
                   {copy.routes.pastExecutions}
                 </button>
-                <h2 className="mt-6 text-[18px] font-semibold tracking-[-.035em]">
+                <h2 className="mt-2 text-[18px] font-semibold tracking-[-.035em]">
                   {executionCopy.title}
                 </h2>
                 <div className="mt-4 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.035)]">
-                  <div className="flex items-center gap-2 text-[11px] font-semibold text-[#3f7b50]">
-                    <span className="grid h-6 w-6 place-items-center rounded-full bg-[#eaf4ec]">
-                      <HugeiconsIcon icon={CheckIcon} size={12} />
+                  <div
+                    className={`flex items-center gap-2 text-[11px] font-semibold ${selectedExecution.status === "failed" ? "text-red-600" : selectedExecution.status === "running" ? "text-[#b95c28]" : "text-[#3f7b50]"}`}
+                  >
+                    <span
+                      className={`grid h-6 w-6 place-items-center rounded-full ${selectedExecution.status === "failed" ? "bg-red-50" : selectedExecution.status === "running" ? "bg-[#fff0e8]" : "bg-[#eaf4ec]"}`}
+                    >
+                      {selectedExecution.status === "running" ? (
+                        <LoadingOrb state="solving" />
+                      ) : (
+                        <HugeiconsIcon
+                          icon={
+                            selectedExecution.status === "failed"
+                              ? Cancel01Icon
+                              : CheckIcon
+                          }
+                          size={12}
+                        />
+                      )}
                     </span>
-                    {selectedExecution.reviewed
-                      ? copy.routes.reviewStatus
-                      : copy.routes.completedStatus}
+                    {selectedExecution.status === "running"
+                      ? copy.routes.running
+                      : selectedExecution.status === "failed"
+                        ? copy.routes.failedStatus
+                        : copy.routes.completedStatus}
                   </div>
                   <div className="mt-4 flex items-center justify-between text-[9px] text-[#92928d]">
-                    <span>{selectedExecution.time}</span>
-                    <span>{selectedExecution.duration}</span>
+                    <span>{executionTime(selectedExecution.createdAt)}</span>
+                    {selectedExecution.status !== "running" && (
+                      <span>
+                        {executionDuration(selectedExecution.durationMs)}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="mt-6">
-                  <div className="text-[11px] font-medium text-[#777772]">
-                    {executionCopy.summary}
-                  </div>
-                  <div className="mt-2 rounded-[16px] bg-[#edf6ef] p-4 text-[11px] font-medium text-[#396c47]">
-                    {executionCopy.created}
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <div className="text-[11px] font-medium text-[#777772]">
-                    {executionCopy.steps}
-                  </div>
-                  <div className="mt-3 space-y-3">
-                    {flow!.nodes.map((node) => (
-                      <div key={node.id} className="flex items-center gap-2.5">
-                        <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#eaf4ec] text-[#4a8a5d]">
-                          <HugeiconsIcon icon={CheckIcon} size={10} />
-                        </span>
-                        <span className="text-[10px] text-[#686863]">
-                          {node.data.label}
-                        </span>
+                {selectedExecution.status !== "running" && (
+                  <div className="mt-6">
+                    <div className="text-[11px] font-medium text-[#777772]">
+                      {executionCopy.summary}
+                    </div>
+                    {selectedExecution.status === "failed" ? (
+                      <div className="mt-2 rounded-[16px] bg-red-50 p-4 text-[11px] leading-5 text-red-700">
+                        {selectedExecution.output}
                       </div>
-                    ))}
+                    ) : selectedExecution.outputName ? (
+                      <MarkdownFileViewer
+                        output={selectedExecution.output}
+                        name={selectedExecution.outputName}
+                        href={`/api/routes/${selected.id}/runs/${selectedExecution.id}/file`}
+                      />
+                    ) : (
+                      <RunResult
+                        key={selectedExecution.id}
+                        output={
+                          selectedExecution.output || executionCopy.created
+                        }
+                      />
+                    )}
                   </div>
-                </div>
-                {selectedExecution.reviewed && (
-                  <div className="mt-6 rounded-[16px] bg-[#fff1e9] p-4 text-[10px] leading-5 text-[#8b512f]">
-                    {executionCopy.review}
+                )}
+                {selectedExecution.status === "failed" && (
+                  <Button
+                    className="mt-4"
+                    onClick={() => {
+                      setSelectedExecutionId(undefined);
+                      setSideTab("chat");
+                    }}
+                  >
+                    {copy.routes.fixRoute}
+                  </Button>
+                )}
+                {!!selectedExecution.completedSteps?.length && (
+                  <div className="mt-6">
+                    <div className="text-[11px] font-medium text-[#777772]">
+                      {executionCopy.steps}
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {(selectedExecution.completedSteps || []).map((label) => (
+                        <div key={label} className="flex items-center gap-2.5">
+                          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#eaf4ec] text-[#4a8a5d]">
+                            <HugeiconsIcon icon={CheckIcon} size={10} />
+                          </span>
+                          <span className="text-[10px] text-[#686863]">
+                            {routeStepAlias(
+                              {
+                                label,
+                                action: selected.steps?.find(
+                                  (step) => step.label === label,
+                                )?.action,
+                              },
+                              selected.systems,
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </motion.div>
@@ -3806,31 +4444,66 @@ function Routes({
                 </div>
                 <div className="mt-5 space-y-2">
                   {executions.map((execution) => (
-                    <button
+                    <div
                       key={execution.id}
-                      onClick={() => setSelectedExecutionId(execution.id)}
-                      className="pressable w-full rounded-[16px] bg-white p-3.5 text-left shadow-[0_1px_2px_rgba(0,0,0,.035)] hover:bg-white/80"
+                      className="rounded-[16px] bg-white p-3.5 shadow-[0_1px_2px_rgba(0,0,0,.035)]"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-2 text-[10px] font-semibold">
-                          <span className="grid h-5 w-5 place-items-center rounded-full bg-[#eaf4ec] text-[#4a8a5d]">
-                            <HugeiconsIcon icon={CheckIcon} size={11} />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedExecutionId(execution.id)}
+                        className="pressable w-full text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`flex items-center gap-2 text-[10px] font-semibold ${execution.status === "failed" ? "text-red-600" : ""}`}
+                          >
+                            <span
+                              className={`grid h-5 w-5 place-items-center rounded-full ${execution.status === "failed" ? "bg-red-50 text-red-600" : execution.status === "running" ? "bg-[#fff0e8] text-[#d56730]" : "bg-[#eaf4ec] text-[#4a8a5d]"}`}
+                            >
+                              {execution.status === "running" ? (
+                                <LoadingOrb state="solving" />
+                              ) : (
+                                <HugeiconsIcon
+                                  icon={
+                                    execution.status === "failed"
+                                      ? Cancel01Icon
+                                      : CheckIcon
+                                  }
+                                  size={11}
+                                />
+                              )}
+                            </span>
+                            {execution.status === "running"
+                              ? copy.routes.running
+                              : execution.status === "failed"
+                                ? copy.routes.failedStatus
+                                : copy.routes.completedStatus}
                           </span>
-                          {execution.reviewed
-                            ? copy.routes.reviewStatus
-                            : copy.routes.completedStatus}
-                        </span>
-                        <HugeiconsIcon
-                          icon={ChevronRightIcon}
-                          size={11}
-                          className="text-[#aaa9a4]"
-                        />
-                      </div>
-                      <div className="mt-3 flex items-center justify-between text-[9px] text-[#92928d]">
-                        <span>{execution.time}</span>
-                        <span>{execution.duration}</span>
-                      </div>
-                    </button>
+                          <HugeiconsIcon
+                            icon={ChevronRightIcon}
+                            size={11}
+                            className="text-[#aaa9a4]"
+                          />
+                        </div>
+                        <div className="mt-3 flex items-center justify-between text-[9px] text-[#92928d]">
+                          <span>{executionTime(execution.createdAt)}</span>
+                          {execution.status !== "running" && (
+                            <span>
+                              {executionDuration(execution.durationMs)}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                      {execution.status === "failed" && (
+                        <button
+                          type="button"
+                          onClick={() => setSideTab("chat")}
+                          className="pressable mt-3 rounded-full bg-red-50 px-3 py-1.5 text-[9px] font-semibold text-red-700 hover:bg-red-100"
+                        >
+                          {copy.routes.fixRoute}
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </motion.div>
@@ -3838,6 +4511,7 @@ function Routes({
           </AnimatePresence>
         </div>
       </aside>
+      {renderDeleteDialog()}
     </div>
   );
 }
@@ -3894,6 +4568,176 @@ function ReviewSheet({ continueRoute }: { continueRoute: () => void }) {
   );
 }
 
+type CatalogToolkit = {
+  name: string;
+  slug: string;
+  logo?: string;
+  description?: string;
+};
+
+let toolkitsRequest: Promise<CatalogToolkit[]> | undefined;
+
+function fetchToolkits() {
+  if (!toolkitsRequest) {
+    toolkitsRequest = fetch("/api/integrations/toolkits")
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(
+            typeof data.error === "string"
+              ? data.error
+              : "Could not load systems.",
+          );
+        return (data.toolkits ?? []) as CatalogToolkit[];
+      })
+      .catch((error) => {
+        toolkitsRequest = undefined;
+        throw error;
+      });
+  }
+  return toolkitsRequest;
+}
+
+function toolkitKey(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+const toolkitAliases: Record<string, string> = {
+  "Microsoft 365": "outlook",
+};
+
+function toolkitLogo(toolkits: CatalogToolkit[] | null, name: string) {
+  if (!toolkits) return;
+  const key = toolkitAliases[name] || toolkitKey(name);
+  const item = toolkits.find(
+    (toolkit) =>
+      toolkitKey(toolkit.name) === key || toolkitKey(toolkit.slug) === key,
+  );
+  return item?.logo;
+}
+
+function SystemCatalog({
+  toolkits,
+  busy,
+  error,
+  integrations,
+  onConnect,
+  onClose,
+}: {
+  toolkits: CatalogToolkit[] | null;
+  busy: boolean;
+  error: string;
+  integrations: string[];
+  onConnect: (name: string) => void;
+  onClose: () => void;
+}) {
+  const { copy } = useLocale();
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const visible = (toolkits ?? [])
+    .filter(
+      (item) =>
+        !q ||
+        item.name.toLowerCase().includes(q) ||
+        item.slug.toLowerCase().includes(q),
+    )
+    .sort((a, b) => {
+      const aOn = integrations.includes(a.name) ? 0 : 1;
+      const bOn = integrations.includes(b.name) ? 0 : 1;
+      return aOn - bOn;
+    });
+  return (
+    <div
+      className="fixed inset-0 z-[60] grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <motion.section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="catalog-title"
+        initial={{ opacity: 0, scale: 0.97, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={spring}
+        className="flex max-h-[min(80vh,720px)] w-full max-w-[720px] flex-col rounded-[24px] bg-white p-6 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <h2
+            id="catalog-title"
+            className="text-[21px] font-semibold tracking-[-.035em]"
+          >
+            {copy.sources.allSystems}
+          </h2>
+          <button
+            type="button"
+            aria-label={copy.sources.cancel}
+            onClick={onClose}
+            className="pressable text-[#999994] hover:text-black"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={16} />
+          </button>
+        </div>
+        <label className="relative mt-5 block">
+          <HugeiconsIcon
+            icon={Search01Icon}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#aaa9a5]"
+            size={15}
+          />
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={copy.sources.searchSystems}
+            className="h-12 w-full rounded-[14px] bg-[#f7f7f5] pl-10 pr-4 text-[13px] outline-none ring-[#ff7a35] placeholder:text-[#aaa9a5] focus:ring-2"
+          />
+        </label>
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+          {busy ? (
+            <div className="grid place-items-center py-16 text-[#92928d]">
+              <LoadingOrb state="searching" size="center" />
+            </div>
+          ) : error ? (
+            <p className="py-16 text-center text-[12px] text-[#777772]">
+              {error}
+            </p>
+          ) : visible.length === 0 ? (
+            <p className="py-16 text-center text-[12px] text-[#777772]">
+              {copy.sources.noMatchingSystems}
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {visible.map((item) => {
+                const active = integrations.includes(item.name);
+                return (
+                  <button
+                    key={item.slug}
+                    type="button"
+                    onClick={() => onConnect(item.name)}
+                    className={`pressable flex items-center gap-3 rounded-[18px] p-4 text-left transition ${active ? "bg-[#232321] text-white shadow-lg shadow-black/10" : "bg-[#f7f7f5] hover:bg-[#f0f0ed]"}`}
+                  >
+                    <SystemMark name={item.name} logo={item.logo ?? ""} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] font-medium">
+                        {item.name}
+                      </div>
+                      <div
+                        className={`mt-1 text-[9px] ${active ? "text-white/70" : "text-[#92928d]"}`}
+                      >
+                        {active ? copy.sources.connected : copy.sources.connect}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.section>
+    </div>
+  );
+}
+
 function Sources({
   company,
   profileType = "company",
@@ -3925,7 +4769,37 @@ function Sources({
   const [pendingDisconnect, setPendingDisconnect] = useState<string>();
   const [disconnecting, setDisconnecting] = useState(false);
   const [disconnectError, setDisconnectError] = useState("");
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const [toolkits, setToolkits] = useState<CatalogToolkit[] | null>(null);
+  const [catalogBusy, setCatalogBusy] = useState(false);
+  const [catalogError, setCatalogError] = useState("");
   const input = useRef<HTMLInputElement>(null);
+  const loadCatalog = () => {
+    if (toolkits || catalogBusy) return;
+    setCatalogBusy(true);
+    setCatalogError("");
+    void fetchToolkits()
+      .then(setToolkits)
+      .catch((error) => {
+        setCatalogError(
+          error instanceof Error ? error.message : copy.sources.catalogError,
+        );
+      })
+      .finally(() => setCatalogBusy(false));
+  };
+  useEffect(() => {
+    loadCatalog();
+  }, []);
+  const openCatalog = () => {
+    setCatalogOpen(true);
+    loadCatalog();
+  };
+  const shownSystems = [
+    ...integrations,
+    ...suggestedIntegrations(profileType).filter(
+      (name) => !integrations.includes(name),
+    ),
+  ];
   const field = (key: keyof Company, value: string) =>
     setDraftCompany((c) => ({ ...c, [key]: value }));
   const addFiles = (list: FileList | null) => {
@@ -3986,11 +4860,7 @@ function Sources({
           <span className="group relative inline-flex">
             <Button disabled={!hasSources || generating} onClick={onGenerate}>
               {generating ? (
-                <HugeiconsIcon
-                  icon={Loading01Icon}
-                  className="animate-spin"
-                  size={13}
-                />
+                <LoadingOrb state="searching" theme="dark" />
               ) : (
                 <HugeiconsIcon icon={SparklesIcon} size={13} />
               )}
@@ -4013,7 +4883,7 @@ function Sources({
             {copy.sources.connectedSystems}
           </h2>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
-            {integrationNames.map((name) => {
+            {shownSystems.map((name) => {
               const active = integrations.includes(name);
               return (
                 <button
@@ -4021,7 +4891,10 @@ function Sources({
                   onClick={() => connect(name)}
                   className={`pressable flex items-center gap-3 rounded-[18px] p-4 text-left transition ${active ? "bg-[#232321] text-white shadow-lg shadow-black/10" : "bg-white hover:bg-[#fdfdfc]"}`}
                 >
-                  <SystemMark name={name} />
+                  <SystemMark
+                    name={name}
+                    logo={toolkitLogo(toolkits, name) ?? ""}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="text-[12px] font-medium">{name}</div>
                     <div
@@ -4047,6 +4920,13 @@ function Sources({
               );
             })}
           </div>
+          <button
+            type="button"
+            onClick={openCatalog}
+            className="pressable mt-3 flex w-full items-center justify-center rounded-[18px] bg-white p-4 text-[12px] font-medium text-[#777772] hover:bg-[#fdfdfc]"
+          >
+            {copy.sources.more}
+          </button>
         </section>
         <section className="mt-10">
           <h2 className="text-[13px] font-semibold">
@@ -4252,9 +5132,19 @@ function Sources({
           )}
         </section>
       </div>
+      {catalogOpen && (
+        <SystemCatalog
+          toolkits={toolkits}
+          busy={catalogBusy}
+          error={catalogError}
+          integrations={integrations}
+          onConnect={connect}
+          onClose={() => setCatalogOpen(false)}
+        />
+      )}
       {pendingDisconnect && (
         <div
-          className="fixed inset-0 z-[60] grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
+          className="fixed inset-0 z-[70] grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !disconnecting)
               setPendingDisconnect(undefined);
@@ -4301,11 +5191,7 @@ function Sources({
                 className="pressable inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-[13px] font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {disconnecting && (
-                  <HugeiconsIcon
-                    icon={Loading01Icon}
-                    className="animate-spin"
-                    size={13}
-                  />
+                  <LoadingOrb state="connecting" theme="dark" />
                 )}
                 Disconnect
               </button>
@@ -4331,7 +5217,16 @@ type LocalWorkspaceResponse = {
     description: string;
     status: string;
   }[];
-  routes: { id: number; title: string; description: string }[];
+  routes: {
+    id: number;
+    opportunityId: number | null;
+    title: string;
+    description: string;
+    hours: number;
+    systems: string[] | null;
+    steps: RouteStep[] | null;
+    executions: RouteExecution[];
+  }[];
 };
 
 export function LocalDashboard() {
@@ -4379,7 +5274,10 @@ export function LocalDashboard() {
     if (!data.workspace) setSetupStep(0);
     else if (!data.opportunities.length) setSetupStep(1);
     else setSetupStep(2);
-    if (initialize) setSetupOpen(!data.workspace);
+    if (initialize) {
+      setSetupOpen(!data.workspace);
+      if (data.routes.length) setView("Routes");
+    }
   };
 
   useEffect(() => {
@@ -4420,7 +5318,7 @@ export function LocalDashboard() {
     : [];
   const opportunities: Opportunity[] = (workspace?.opportunities || []).map(
     (item, index) => ({
-      id: String(item.id),
+      id: `opp_${item.id}`,
       title: item.title,
       description: item.description,
       evidence: "Found in your connected sources",
@@ -4428,6 +5326,7 @@ export function LocalDashboard() {
       impact: index < 3 ? "High" : "Medium",
       effort: index < 2 ? "Low" : "Medium",
       confidence: 94 - index * 3,
+      status: item.status === "converted" ? "converted" : "open",
       systems: integrations.length
         ? ["Gmail", "Company knowledge"]
         : ["Company knowledge"],
@@ -4435,13 +5334,18 @@ export function LocalDashboard() {
   );
   const routes: RouteData[] = (workspace?.routes || []).map((item) => ({
     id: String(item.id),
+    opportunityId: item.opportunityId ? `opp_${item.opportunityId}` : undefined,
     title: item.title,
     description: item.description,
-    hours: 4,
-    systems: integrations.length
-      ? ["Gmail", "Company knowledge"]
-      : ["Company knowledge"],
+    hours: item.hours,
+    systems:
+      item.systems ||
+      (integrations.length
+        ? ["Gmail", "Company knowledge"]
+        : ["Company knowledge"]),
     createdAt: item.id,
+    steps: item.steps || undefined,
+    executions: item.executions,
   }));
 
   const saveProfile = async () => {
@@ -4617,6 +5521,29 @@ export function LocalDashboard() {
     }
     await load();
   };
+  const deleteOpportunity = async (opportunity: Opportunity) => {
+    const response = await fetch(`/api/opportunities/${opportunity.id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      setError(result.error || "Could not delete the opportunity.");
+      return;
+    }
+    await load();
+  };
+  const deleteRoute = async (route: RouteData) => {
+    const response = await fetch(`/api/routes/${route.id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      setError(result.error || "Could not delete the route.");
+      return false;
+    }
+    await load();
+    return true;
+  };
 
   if (!ready || !workspace)
     return <div className="min-h-screen bg-[#f7f7f5]" />;
@@ -4665,7 +5592,8 @@ export function LocalDashboard() {
               routes={routes}
               selectedId={selected}
               setSelected={setSelected}
-              updateRoute={() => {}}
+              updateRoute={() => void load()}
+              removeRoute={deleteRoute}
               showOpportunities={() => setView("Opportunities")}
             />
           )}
@@ -4673,7 +5601,9 @@ export function LocalDashboard() {
             <OpportunityList
               opportunities={opportunities}
               creating={busy.startsWith("route-") ? busy.slice(6) : null}
+              error={error}
               create={createRoute}
+              remove={deleteOpportunity}
               addSource={() => setView("Sources")}
               createManual={createManualOpportunity}
             />
@@ -4866,11 +5796,7 @@ export function LocalDashboard() {
                       className="ml-auto"
                     >
                       {busy === "generate" ? (
-                        <HugeiconsIcon
-                          icon={Loading01Icon}
-                          className="animate-spin"
-                          size={13}
-                        />
+                        <LoadingOrb state="searching" theme="dark" />
                       ) : (
                         <HugeiconsIcon icon={SparklesIcon} size={13} />
                       )}{" "}
@@ -4916,11 +5842,7 @@ export function LocalDashboard() {
                             className="shrink-0"
                           >
                             {busy === `route-${opportunity.id}` ? (
-                              <HugeiconsIcon
-                                icon={Loading01Icon}
-                                className="animate-spin"
-                                size={13}
-                              />
+                              <LoadingOrb state="solving" theme="dark" />
                             ) : (
                               <HugeiconsIcon icon={Add01Icon} size={13} />
                             )}{" "}
@@ -4983,14 +5905,8 @@ export function LocalDashboard() {
                   onClick={() => void resetOnboarding()}
                   className="pressable inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-600 px-4 text-[13px] font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {busy === "reset" && (
-                    <HugeiconsIcon
-                      icon={Loading01Icon}
-                      className="animate-spin"
-                      size={13}
-                    />
-                  )}{" "}
-                  Reset everything
+                  {busy === "reset" && <LoadingOrb theme="dark" />} Reset
+                  everything
                 </button>
               </div>
             </motion.section>
@@ -5098,6 +6014,7 @@ export default function Home() {
       const steps = isExample ? exampleRouteSteps[o.id] : undefined;
       const route: RouteData = {
         id: `route-${Date.now()}`,
+        opportunityId: o.id,
         title: o.title,
         description: o.description,
         hours: o.hours,
@@ -5106,11 +6023,23 @@ export default function Home() {
         ...(steps ? { steps } : {}),
       };
       const next = [route, ...routes];
+      const nextOpportunities = opportunities.map((opportunity) =>
+        opportunity.id === o.id
+          ? { ...opportunity, status: "converted" as const }
+          : opportunity,
+      );
       setRoutes(next);
+      setOpportunities(nextOpportunities);
       setSelected(route.id);
       setCreating(null);
       setView("Routes");
-      persist({ company, files, integrations, opportunities, routes: next });
+      persist({
+        company,
+        files,
+        integrations,
+        opportunities: nextOpportunities,
+        routes: next,
+      });
     }, 650);
   };
   const createManualOpportunity = async (
@@ -5131,6 +6060,30 @@ export default function Home() {
     const next = [opportunity, ...opportunities];
     setOpportunities(next);
     persist({ company, files, integrations, opportunities: next, routes });
+  };
+  const deleteOpportunity = async (opportunity: Opportunity) => {
+    const next = opportunities.filter((item) => item.id !== opportunity.id);
+    setOpportunities(next);
+    persist({ company, files, integrations, opportunities: next, routes });
+  };
+  const deleteRoute = async (route: RouteData) => {
+    const nextRoutes = routes.filter((item) => item.id !== route.id);
+    const nextOpportunities = opportunities.map((opportunity) =>
+      opportunity.id === route.opportunityId ||
+      (!route.opportunityId && opportunity.title === route.title)
+        ? { ...opportunity, status: "open" as const }
+        : opportunity,
+    );
+    setRoutes(nextRoutes);
+    setOpportunities(nextOpportunities);
+    persist({
+      company,
+      files,
+      integrations,
+      opportunities: nextOpportunities,
+      routes: nextRoutes,
+    });
+    return true;
   };
   const exploreExample = () => {
     setCompany(exampleCompany);
@@ -5211,6 +6164,7 @@ export default function Home() {
                       routes: next,
                     });
                   }}
+                  removeRoute={deleteRoute}
                   showOpportunities={() => setView("Opportunities")}
                 />
               )}
@@ -5219,6 +6173,7 @@ export default function Home() {
                   opportunities={opportunities}
                   creating={creating}
                   create={createRoute}
+                  remove={deleteOpportunity}
                   addSource={() => setView("Sources")}
                   createManual={createManualOpportunity}
                 />
