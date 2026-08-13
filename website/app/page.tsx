@@ -4323,7 +4323,7 @@ function Routes({
                   <HugeiconsIcon icon={ArrowLeft01Icon} size={12} />
                   {copy.routes.pastExecutions}
                 </button>
-                <h2 className="mt-2 text-[18px] font-semibold tracking-[-.035em]">
+                <h2 className="mt-5 text-[18px] font-semibold tracking-[-.035em]">
                   {executionCopy.title}
                 </h2>
                 <div className="mt-4 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,.035)]">
