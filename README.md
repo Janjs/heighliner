@@ -26,8 +26,8 @@ cp .env.example .env.local
 
 3. Add the required keys to `.env.local`:
 
-- `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for AI generation and file parsing
-- `AI_PROVIDER=openai` or `AI_PROVIDER=anthropic` to choose between configured keys
+- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `MISTRAL_API_KEY` for AI generation and file parsing
+- `AI_PROVIDER=openai`, `AI_PROVIDER=anthropic`, or `AI_PROVIDER=mistral` to choose between configured keys
 - `COMPOSIO_API_KEY` for integration connections
 
 4. Start the app:
@@ -39,10 +39,6 @@ npm run dev
 5. Open [http://localhost:3000](http://localhost:3000), create an account, and start a workspace.
 
 Your data is stored locally in `data/heighliner.db`. You own all of it, and it is not sent to any server except the LLM provider you configure for AI generation and file parsing.
-
-## See it in action
-
-Try the demo at [heighliner.janjs.dev](https://heighliner.janjs.dev/)
 
 ## Run in production
 
