@@ -1671,9 +1671,9 @@ type LandingCopy = {
 const landingCopy: Record<Lang, LandingCopy> = {
   en: {
     navContact: "Contact",
-    title: "Find and automate your company’s repetitive work.",
-    body: "You don’t need to know what to automate. Tell Heighliner how your company works and it will find the opportunities for you.",
-    contactButton: "Tell us about your company",
+    title: "Let AI find and automate your repetitive work.",
+    body: "You don’t need to know what to automate. Tell Heighliner how your company or personal workflow works, and it will find the opportunities for you.",
+    contactButton: "Tell us about your case",
     demo: "View an example",
     deploy: "Host it yourself",
     previewTag: "your company workspace",
@@ -1742,9 +1742,9 @@ const landingCopy: Record<Lang, LandingCopy> = {
   },
   es: {
     navContact: "Contacto",
-    title: "Encontramos y automatizamos el trabajo repetitivo de tu empresa.",
-    body: "No tienes que saber qué automatizar. Cuéntale a Heighliner cómo funciona tu empresa y encontrará las oportunidades por ti.",
-    contactButton: "Cuéntanos sobre tu empresa",
+    title: "Deja que la IA encuentre y automatice tu trabajo repetitivo.",
+    body: "No tienes que saber qué automatizar. Cuéntale a Heighliner cómo funciona tu empresa o tu flujo de trabajo personal y encontrará las oportunidades por ti.",
+    contactButton: "Cuéntanos sobre tu caso",
     demo: "Ver un ejemplo",
     deploy: "Despliega el tuyo",
     previewTag: "Espacio de trabajo de tu empresa",
@@ -1810,9 +1810,9 @@ const landingCopy: Record<Lang, LandingCopy> = {
   },
   nl: {
     navContact: "Contact",
-    title: "We vinden en automatiseren het repetitieve werk van je bedrijf.",
-    body: "Je hoeft niet te weten wat je moet automatiseren. Vertel Heighliner hoe je bedrijf werkt en het vindt de kansen voor je.",
-    contactButton: "Vertel ons over je bedrijf",
+    title: "Laat AI je repetitieve werk vinden en automatiseren.",
+    body: "Je hoeft niet te weten wat je moet automatiseren. Vertel Heighliner hoe je bedrijf of persoonlijke workflow werkt en het vindt de kansen voor je.",
+    contactButton: "Vertel ons over je situatie",
     demo: "Bekijk een voorbeeld",
     deploy: "Zet het zelf live",
     previewTag: "Werkruimte van je bedrijf",
