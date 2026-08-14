@@ -5515,7 +5515,7 @@ type LocalWorkspaceResponse = {
   }[];
 };
 
-export function LocalDashboard() {
+function LocalDashboard() {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("Sources");
   const [workspace, setWorkspace] = useState<LocalWorkspaceResponse | null>(
@@ -6341,7 +6341,7 @@ export default function Home() {
       impact: "Medium",
       effort: "Medium",
       confidence: 100,
-      systems: connectedSystems(integrations, files.length > 0, profileType),
+      systems: connectedSystems(integrations, files.length > 0, "company"),
     };
     const next = [opportunity, ...opportunities];
     setOpportunities(next);
