@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { parseFile } from "@/lib/mistral";
+import { parseFile } from "@/lib/ai";
 import { executeRoute } from "@/lib/routes";
 
 export async function POST(

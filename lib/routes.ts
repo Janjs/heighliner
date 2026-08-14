@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { generateJson } from "./ai";
 
 const actions = [
   "read_sources",
@@ -24,30 +25,6 @@ type GeneratedRoute = {
   systems: string[];
   steps: RouteStep[];
 };
-
-async function askMistral(system: string, input: unknown) {
-  if (!process.env.MISTRAL_API_KEY)
-    throw new Error("Mistral is not configured.");
-  const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.MISTRAL_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.MISTRAL_MODEL || "mistral-small-latest",
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: JSON.stringify(input) },
-      ],
-    }),
-  });
-  if (!response.ok) throw new Error("Mistral could not complete the route.");
-  return JSON.parse(
-    (await response.json()).choices?.[0]?.message?.content || "{}",
-  );
-}
 
 function validRoute(value: unknown): value is GeneratedRoute {
   const route = value as GeneratedRoute;
@@ -134,8 +111,8 @@ export async function generateRoute(userId: number, opportunityId: number) {
       },
     ],
   };
-  let generated = await askMistral(prompt, input);
-  if (!validRoute(generated)) generated = await askMistral(prompt, input);
+  let generated = await generateJson(prompt, input);
+  if (!validRoute(generated)) generated = await generateJson(prompt, input);
   if (!validRoute(generated)) return fallback;
 
   const systems = generated.systems.filter((system) =>
@@ -226,7 +203,7 @@ export async function executeRoute(
   const completedSteps = [steps[0].label];
 
   for (const step of steps.slice(1, createsFile ? -1 : undefined)) {
-    const result = await askMistral(
+    const result = await generateJson(
       "Perform exactly one text transformation step. Use only the supplied input. Return JSON only with an output string. Do not invent facts, dates, actions, or data. Do not claim to have stored, sent, updated, deleted, published, scheduled, or modified anything.",
       {
         route: { title: route.title, description: route.description },
@@ -284,12 +261,12 @@ export async function editRoute(
     systems: JSON.parse(stored.systemsJson || "[]"),
     steps: JSON.parse(stored.stepsJson),
   };
-  const generated = await askMistral(
+  const generated = await generateJson(
     "Apply the user's requested edit to the supplied AI route. Return JSON only with title, description, hours, systems, and 2-5 ordered steps. Each step has label, detail, and action. Start with read_sources, or read_files only if the user requests run-time file input. Follow with ai_transform steps. End with create_file only if the user requests a downloadable Markdown file. Labels are short user-facing titles; never expose action identifiers or snake_case in labels. Never add file input or output merely because the capability exists. Never add steps that send, update, delete, publish, modify, schedule, upload, or write to another system. Keep the existing systems.",
     { current, requestedEdit: message },
   );
   if (!validRoute(generated))
-    throw new Error("Mistral returned an invalid route.");
+    throw new Error("The AI provider returned an invalid route.");
   const createsFile = generated.steps.at(-1)!.action === "create_file";
   const transforms = generated.steps
     .slice(1, createsFile ? -1 : undefined)

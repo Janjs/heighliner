@@ -5515,7 +5515,7 @@ type LocalWorkspaceResponse = {
   }[];
 };
 
-function LocalDashboard() {
+export function LocalDashboard() {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("Sources");
   const [workspace, setWorkspace] = useState<LocalWorkspaceResponse | null>(
