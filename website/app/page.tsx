@@ -27,6 +27,7 @@ import {
   Folder01Icon,
   GitBranchIcon,
   Mail01Icon,
+  Menu01Icon,
   MoreVerticalIcon,
   PlayIcon,
   Route01Icon,
@@ -1592,6 +1593,33 @@ function useLocale() {
   return context;
 }
 
+const SidebarMobileContext = createContext<{
+  open: boolean;
+  toggle: () => void;
+  close: () => void;
+} | null>(null);
+
+function useSidebarMobile() {
+  return useContext(SidebarMobileContext);
+}
+
+function SidebarMobileProvider({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const value = useMemo(
+    () => ({
+      open,
+      toggle: () => setOpen((current) => !current),
+      close: () => setOpen(false),
+    }),
+    [open],
+  );
+  return (
+    <SidebarMobileContext.Provider value={value}>
+      {children}
+    </SidebarMobileContext.Provider>
+  );
+}
+
 function Logo({ onClick }: { onClick?: () => void }) {
   const mark = (
     <>
@@ -1674,7 +1702,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     title: "Let AI find and automate your repetitive work.",
     body: "You don’t need to know what to automate. Tell Heighliner how your company or personal workflow works, and it will find the opportunities for you.",
     contactButton: "Tell us about your case",
-    demo: "View an example",
+    demo: "View demo",
     deploy: "Host it yourself",
     previewTag: "your company workspace",
     previewTitle: "6 valuable routes found",
@@ -1719,7 +1747,7 @@ const landingCopy: Record<Lang, LandingCopy> = {
     exampleTitle: "See how it worked for a small souvenir company in Spain.",
     exampleBody:
       "Explore a real workspace, the opportunities Heighliner found, and the routes it built.",
-    exampleButton: "View an example",
+    exampleButton: "View demo",
     note: "AI automation discovery, design, and implementation.",
     preview: {
       navRoutes: "Routes",
@@ -2020,12 +2048,12 @@ function Landing({ explore }: { explore: () => void }) {
   };
   return (
     <div className="min-h-screen overflow-hidden bg-[#f7f7f5] px-5 text-[#20201f] sm:px-7 lg:px-10">
-      <header className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between">
+      <header className="mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between sm:h-20">
         <Logo />
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-3 sm:gap-5">
           <a
             href="#contact"
-            className="pressable text-[12px] font-medium text-[#696964] hover:text-black"
+            className="pressable hidden text-[12px] font-medium text-[#696964] hover:text-black sm:inline"
           >
             {copy.navContact}
           </a>
@@ -2068,7 +2096,7 @@ function Landing({ explore }: { explore: () => void }) {
           >
             <div className="absolute inset-x-[12%] bottom-0 h-2/3 rounded-full bg-[#ff7a35]/15 blur-[100px]" />
             <div className="relative rounded-[28px] border border-black/[.08] bg-[#e9e9e6] p-2 shadow-[0_35px_100px_rgba(27,27,25,.14)] transition-[filter] duration-200 ease-[cubic-bezier(.23,1,.32,1)] group-hover:blur-[3px] group-focus-within:blur-[3px] sm:rounded-[36px] sm:p-3">
-              <div className="grid min-h-[520px] overflow-hidden rounded-[22px] bg-[#f7f7f5] sm:rounded-[28px] xl:grid-cols-[150px_1fr]">
+              <div className="grid min-h-[380px] overflow-hidden rounded-[22px] bg-[#f7f7f5] sm:min-h-[520px] sm:rounded-[28px] xl:grid-cols-[150px_1fr]">
                 <aside className="hidden min-h-full flex-col border-r border-black/[.06] bg-white/70 p-4 xl:flex">
                   <Logo />
                   <div className="mt-9 space-y-1 text-[11px]">
@@ -2224,7 +2252,7 @@ function Landing({ explore }: { explore: () => void }) {
               {copy.routeTitle}
             </h2>
             <div className="mt-10 grid gap-8 lg:grid-cols-[1.12fr_.88fr] lg:items-stretch">
-              <div className="min-h-[500px] overflow-hidden rounded-[30px] bg-[#20201f] p-6 text-white sm:p-8">
+              <div className="min-h-[420px] overflow-hidden rounded-[30px] bg-[#20201f] p-5 text-white sm:min-h-[500px] sm:p-8">
                 <div className="flex items-center justify-between">
                   <span className="text-[12px] font-medium text-[#ff8a4d]">
                     {activeJourney + 1} · {copy.steps[activeJourney][0]}
@@ -2234,8 +2262,8 @@ function Landing({ explore }: { explore: () => void }) {
 
                 <div key={activeJourney} className="landing-journey-visual">
                   {activeJourney === 0 && (
-                    <div className="grid h-[410px] place-items-center">
-                      <div className="grid w-full max-w-[520px] grid-cols-[1fr_56px_1.1fr] items-center gap-y-3">
+                    <div className="grid h-[320px] place-items-center sm:h-[410px]">
+                      <div className="grid w-full max-w-[520px] grid-cols-[minmax(0,1fr)_32px_minmax(0,1fr)] items-center gap-y-3 sm:grid-cols-[1fr_56px_1.1fr]">
                         {["WhatsApp", "Gmail", "Salesforce"].map(
                           (system, index) => (
                             <div key={system} className="contents">
@@ -2991,13 +3019,39 @@ function Sidebar({
   account?: SidebarAccount;
 }) {
   const { copy } = useLocale();
+  const mobile = useSidebarMobile();
   const [routesOpen, setRoutesOpen] = useState(true);
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
+  const mobileOpen = mobile?.open ?? false;
+  const closeMobile = () => mobile?.close();
+  const navigate = (action: () => void) => {
+    action();
+    closeMobile();
+  };
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 flex w-[250px] flex-col bg-white/65 px-3 py-5 backdrop-blur-2xl">
-      <div className="px-3">
-        <Logo onClick={reset} />
-      </div>
+    <>
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-30 bg-black/25 lg:hidden"
+          onClick={closeMobile}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-[min(88vw,250px)] flex-col bg-white/65 px-3 py-5 backdrop-blur-2xl transition-transform duration-200 ease-out lg:w-[250px] lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      >
+        <div className="flex items-start justify-between px-3">
+          <Logo onClick={() => navigate(reset)} />
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={closeMobile}
+            className="pressable grid h-8 w-8 place-items-center rounded-full text-[#777772] hover:bg-black/[.06] lg:hidden"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={15} />
+          </button>
+        </div>
       <nav className="mt-8 space-y-3">
         <div>
           <div
@@ -3005,8 +3059,10 @@ function Sidebar({
           >
             <button
               onClick={() => {
-                showRoutes();
-                setRoutesOpen(true);
+                navigate(() => {
+                  showRoutes();
+                  setRoutesOpen(true);
+                });
               }}
               className={`pressable flex h-10 min-w-0 flex-1 items-center gap-3 rounded-[11px] px-3 text-[13px] transition ${view === "Routes" ? "font-medium" : "text-[#70706b]"}`}
             >
@@ -3030,7 +3086,7 @@ function Sidebar({
               {routes.map((route) => (
                 <button
                   key={route.id}
-                  onClick={() => selectRoute(route.id)}
+                  onClick={() => navigate(() => selectRoute(route.id))}
                   className={`pressable flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-left ${selected === route.id && view === "Routes" ? "bg-white shadow-sm" : "hover:bg-white/60"}`}
                 >
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8c7c1]" />
@@ -3052,7 +3108,7 @@ function Sidebar({
             className={`flex h-10 items-center rounded-[11px] ${view === "Opportunities" ? "bg-black/[.065]" : "hover:bg-black/[.035]"}`}
           >
             <button
-              onClick={() => setView("Opportunities")}
+              onClick={() => navigate(() => setView("Opportunities"))}
               className={`pressable flex h-10 min-w-0 flex-1 items-center gap-3 rounded-[11px] px-3 text-[13px] transition ${view === "Opportunities" ? "font-medium" : "text-[#70706b]"}`}
             >
               <HugeiconsIcon icon={SparklesIcon} size={16} strokeWidth={1.7} />
@@ -3084,7 +3140,7 @@ function Sidebar({
               {opportunities.map((opportunity) => (
                 <button
                   key={opportunity.id}
-                  onClick={() => selectOpportunity(opportunity.id)}
+                  onClick={() => navigate(() => selectOpportunity(opportunity.id))}
                   className="pressable flex w-full items-center gap-2.5 rounded-[11px] px-3 py-2.5 text-left hover:bg-white/60"
                 >
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#c8c7c1]" />
@@ -3102,7 +3158,7 @@ function Sidebar({
           )}
         </div>
         <button
-          onClick={() => setView("Sources")}
+          onClick={() => navigate(() => setView("Sources"))}
           className={`pressable flex h-10 w-full items-center gap-3 rounded-[11px] px-3 text-[13px] transition ${view === "Sources" ? "bg-black/[.065] font-medium" : "text-[#70706b] hover:bg-black/[.035]"}`}
         >
           <HugeiconsIcon icon={Database01Icon} size={16} strokeWidth={1.7} />
@@ -3124,7 +3180,8 @@ function Sidebar({
           )}
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 }
 
@@ -3141,8 +3198,19 @@ function ShellHeader({
   back?: () => void;
   backLabel?: string;
 }) {
+  const sidebar = useSidebarMobile();
   return (
-    <header className="sticky top-0 z-20 flex h-[82px] w-full min-w-0 items-center gap-3 bg-[#f7f7f5]/82 px-5 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 flex min-h-[72px] w-full min-w-0 items-center gap-2 bg-[#f7f7f5]/82 px-4 py-3 backdrop-blur-xl sm:min-h-[82px] sm:gap-3 sm:px-5 sm:py-0">
+      {sidebar && (
+        <button
+          type="button"
+          aria-label="Open navigation"
+          onClick={sidebar.toggle}
+          className="pressable grid h-9 w-9 shrink-0 place-items-center rounded-full text-[#555550] hover:bg-black/[.08] lg:hidden"
+        >
+          <HugeiconsIcon icon={Menu01Icon} size={16} />
+        </button>
+      )}
       {back && (
         <button
           onClick={back}
@@ -3157,11 +3225,15 @@ function ShellHeader({
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-1 truncate text-[11px] text-[#898984]">{subtitle}</p>
+          <p className="mt-1 hidden truncate text-[11px] text-[#898984] sm:block">
+            {subtitle}
+          </p>
         )}
       </div>
       {action && (
-        <div className="flex shrink-0 items-center gap-2">{action}</div>
+        <div className="flex max-w-[52%] shrink-0 items-center gap-1.5 sm:max-w-none sm:gap-2">
+          {action}
+        </div>
       )}
     </header>
   );
@@ -3198,9 +3270,10 @@ function OpportunityList({
       : opportunity.status !== "converted",
   );
   const action = (
-    <Button onClick={() => setManualOpen(true)}>
+    <Button onClick={() => setManualOpen(true)} className="px-3 sm:px-4">
       <HugeiconsIcon icon={Add01Icon} size={14} />
-      {copy.opportunities.newOpportunity}
+      <span className="hidden sm:inline">{copy.opportunities.newOpportunity}</span>
+      <span className="sm:hidden">New</span>
     </Button>
   );
   const manualDialog = manualOpen && (
@@ -3322,7 +3395,7 @@ function OpportunityList({
         subtitle={copy.opportunities.subtitle}
         action={action}
       />
-      <div className="mx-auto max-w-[1120px] px-8 py-10 lg:px-10">
+      <div className="mx-auto max-w-[1120px] px-4 py-6 sm:px-8 sm:py-10 lg:px-10">
         {error && (
           <p
             role="alert"
@@ -3332,7 +3405,7 @@ function OpportunityList({
           </p>
         )}
         <div className="mb-10">
-          <h2 className="text-[38px] font-semibold tracking-[-.05em]">
+          <h2 className="text-[clamp(1.75rem,6vw,2.375rem)] font-semibold tracking-[-.05em]">
             {tab === "new"
               ? copy.opportunities.heading(visibleOpportunities.length)
               : copy.opportunities.inUseHeading(visibleOpportunities.length)}
@@ -3376,21 +3449,39 @@ function OpportunityList({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...spring, delay: i * 0.035 }}
-                  className="group scroll-m-6 rounded-[22px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)]"
+                  className="group scroll-m-6 rounded-[22px] bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)] transition-[box-shadow,opacity] duration-300 ease-[cubic-bezier(.23,1,.32,1)] hover:shadow-[0_2px_4px_rgba(0,0,0,.045),0_16px_38px_rgba(0,0,0,.06)]"
                 >
-                  <div className="flex items-stretch gap-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h3 className="text-[15px] font-semibold tracking-[-.02em]">
+                        {o.title}
+                      </h3>
+                      {i === 0 && (
+                        <span className="rounded-full bg-[#fff0e8] px-2 py-1 text-[9px] font-semibold text-[#c84f1b]">
+                          {copy.opportunities.recommended}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={copy.opportunities.deleteOpportunity(o.title)}
+                      disabled={deleting === o.id}
+                      onClick={() => {
+                        setDeleting(o.id);
+                        void remove(o).finally(() => setDeleting(null));
+                      }}
+                      className="pressable grid h-8 w-8 shrink-0 place-items-center rounded-full text-[#999994] opacity-0 transition-opacity duration-300 ease-[cubic-bezier(.23,1,.32,1)] hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 group-focus-within:opacity-100 disabled:opacity-40"
+                    >
+                      {deleting === o.id ? (
+                        <LoadingOrb />
+                      ) : (
+                        <HugeiconsIcon icon={Delete02Icon} size={13} />
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-1.5 flex flex-col gap-4 sm:flex-row sm:items-stretch">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-[15px] font-semibold tracking-[-.02em]">
-                          {o.title}
-                        </h3>
-                        {i === 0 && (
-                          <span className="rounded-full bg-[#fff0e8] px-2 py-1 text-[9px] font-semibold text-[#c84f1b]">
-                            {copy.opportunities.recommended}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1.5 text-[11px] leading-5 text-[#777772]">
+                      <p className="text-[11px] leading-5 text-[#777772]">
                         {o.description}
                       </p>
                       <p className="mt-3 text-[10px] text-[#999994]">
@@ -3414,33 +3505,13 @@ function OpportunityList({
                         </span>
                       </div>
                     </div>
-                    <div className="ml-4 flex flex-col items-end self-stretch text-right">
-                      <div className="flex items-start gap-3">
-                        <button
-                          type="button"
-                          aria-label={copy.opportunities.deleteOpportunity(
-                            o.title,
-                          )}
-                          disabled={deleting === o.id}
-                          onClick={() => {
-                            setDeleting(o.id);
-                            void remove(o).finally(() => setDeleting(null));
-                          }}
-                          className="pressable grid h-8 w-8 place-items-center rounded-full text-[#999994] hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-                        >
-                          {deleting === o.id ? (
-                            <LoadingOrb />
-                          ) : (
-                            <HugeiconsIcon icon={Delete02Icon} size={13} />
-                          )}
-                        </button>
-                        <div>
-                          <div className="text-[22px] font-semibold tracking-[-.045em]">
-                            {o.hours}h
-                          </div>
-                          <div className="text-[9px] text-[#999994]">
-                            {copy.opportunities.savedPerWeek}
-                          </div>
+                    <div className="flex flex-row items-end justify-between gap-4 sm:ml-4 sm:flex-col sm:items-end sm:self-stretch sm:text-right">
+                      <div>
+                        <div className="text-[22px] font-semibold tracking-[-.045em]">
+                          {o.hours}h
+                        </div>
+                        <div className="text-[9px] text-[#999994]">
+                          {copy.opportunities.savedPerWeek}
                         </div>
                       </div>
                       {o.status !== "converted" && (
@@ -3462,7 +3533,7 @@ function OpportunityList({
                 </motion.article>
               ))}
             </div>
-            <section className="sticky top-[102px] rounded-[24px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)]">
+            <section className="rounded-[24px] bg-white shadow-[0_1px_2px_rgba(0,0,0,.03),0_10px_30px_rgba(0,0,0,.025)] lg:sticky lg:top-[102px]">
               <div className="flex items-center justify-between px-5 pt-5">
                 <h3 className="text-[12px] font-semibold tracking-[-.02em]">
                   {copy.opportunities.mapTitle}
@@ -3815,6 +3886,7 @@ function Routes({
   const [inputFiles, setInputFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [historyWidth, setHistoryWidth] = useState(360);
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [selectedExecutionId, setSelectedExecutionId] = useState<string>();
   const [sideTab, setSideTab] = useState<"chat" | "history">("history");
   const [chatInput, setChatInput] = useState("");
@@ -3844,6 +3916,7 @@ function Routes({
     setChatInput("");
     setChatMessages([]);
     setSelectedExecutionId(undefined);
+    setMobilePanelOpen(false);
     setExecutions(selected?.executions || []);
   }, [selected?.id, lang]);
   useEffect(() => {
@@ -4106,7 +4179,7 @@ function Routes({
           title={copy.routes.overviewTitle}
           subtitle={copy.routes.overviewDescription}
         />
-        <div className="mx-auto max-w-[1040px] px-8 py-10 lg:px-10">
+        <div className="mx-auto max-w-[1040px] px-4 py-6 sm:px-8 sm:py-10 lg:px-10">
           <div className="grid gap-4 md:grid-cols-2">
             {routes.map((route, index) => (
               <motion.article
@@ -4115,16 +4188,30 @@ function Routes({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ ...spring, delay: index * 0.04 }}
                 onClick={() => setSelected(route.id)}
-                className="pressable group cursor-pointer rounded-[24px] bg-white p-5 text-left shadow-[0_1px_2px_rgba(0,0,0,.03),0_12px_35px_rgba(0,0,0,.035)] transition-shadow hover:shadow-[0_2px_3px_rgba(0,0,0,.04),0_18px_45px_rgba(0,0,0,.06)]"
+                className="pressable group flex h-full cursor-pointer flex-col rounded-[24px] bg-white p-5 text-left shadow-[0_1px_2px_rgba(0,0,0,.03),0_12px_35px_rgba(0,0,0,.035)] transition-[box-shadow,opacity] duration-300 ease-[cubic-bezier(.23,1,.32,1)] hover:shadow-[0_2px_4px_rgba(0,0,0,.045),0_16px_38px_rgba(0,0,0,.06)]"
               >
                 <div className="flex items-start justify-between">
                   <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-[#fff0e8] text-[#d8551d]">
                     <HugeiconsIcon icon={Route01Icon} size={18} />
                   </span>
-                  <span className="flex items-center gap-1.5 rounded-full bg-[#edf6ef] px-2.5 py-1 text-[9px] font-semibold text-[#3f7b50]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#59a76d]" />
-                    {copy.routes.active}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      aria-label={copy.routes.deleteRoute(route.title)}
+                      disabled={deletingRoute}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setConfirmingDeleteRouteId(route.id);
+                      }}
+                      className="pressable grid h-8 w-8 place-items-center rounded-full text-[#999994] opacity-0 transition-opacity duration-300 ease-[cubic-bezier(.23,1,.32,1)] hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 group-focus-within:opacity-100 disabled:opacity-40"
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} size={13} />
+                    </button>
+                    <span className="flex items-center gap-1.5 rounded-full bg-[#edf6ef] px-2.5 py-1 text-[9px] font-semibold text-[#3f7b50]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#59a76d]" />
+                      {copy.routes.active}
+                    </span>
+                  </div>
                 </div>
                 <h3 className="mt-6 text-[17px] font-semibold tracking-[-.03em]">
                   {route.title}
@@ -4132,71 +4219,55 @@ function Routes({
                 <p className="mt-2 line-clamp-2 text-[11px] leading-5 text-[#7c7c77]">
                   {route.description}
                 </p>
-                <div className="mt-6 flex items-center">
-                  {route.systems.map((system, systemIndex) => (
-                    <span
-                      key={system}
-                      className={`grid h-8 w-8 place-items-center rounded-full bg-[#f0f0ed] text-[#666661] ring-2 ring-white ${systemIndex ? "-ml-1.5" : ""}`}
-                      title={system}
-                    >
-                      {integrationLogos[system] ? (
-                        <img
-                          src={integrationLogos[system]}
-                          alt=""
-                          className="h-4 w-4 object-contain"
-                        />
-                      ) : (
-                        <HugeiconsIcon icon={Folder01Icon} size={14} />
-                      )}
-                    </span>
-                  ))}
-                  <span className="ml-3 text-[10px] text-[#92928d]">
-                    {route.systems.join(" · ")}
-                  </span>
-                </div>
-                <div className="mt-6 grid grid-cols-3 rounded-[16px] bg-black/[.035] px-4 py-3">
-                  <div>
-                    <span className="block text-[15px] font-semibold">
-                      {recentRuns(route)}
-                    </span>
-                    <span className="text-[9px] text-[#92928d]">
-                      {copy.routes.runsThisWeek}
+                <div className="mt-auto">
+                  <div className="mt-6 flex items-center">
+                    {route.systems.map((system, systemIndex) => (
+                      <span
+                        key={system}
+                        className={`grid h-8 w-8 place-items-center rounded-full bg-[#f0f0ed] text-[#666661] ring-2 ring-white ${systemIndex ? "-ml-1.5" : ""}`}
+                        title={system}
+                      >
+                        {integrationLogos[system] ? (
+                          <img
+                            src={integrationLogos[system]}
+                            alt=""
+                            className="h-4 w-4 object-contain"
+                          />
+                        ) : (
+                          <HugeiconsIcon icon={Folder01Icon} size={14} />
+                        )}
+                      </span>
+                    ))}
+                    <span className="ml-3 text-[10px] text-[#92928d]">
+                      {route.systems.join(" · ")}
                     </span>
                   </div>
-                  <div>
-                    <span className="block text-[15px] font-semibold">
-                      {successRate(route)}
-                    </span>
-                    <span className="text-[9px] text-[#92928d]">
-                      {copy.routes.success}
-                    </span>
+                  <div className="mt-6 grid grid-cols-3 rounded-[16px] bg-black/[.035] px-4 py-3">
+                    <div>
+                      <span className="block text-[15px] font-semibold">
+                        {recentRuns(route)}
+                      </span>
+                      <span className="text-[9px] text-[#92928d]">
+                        {copy.routes.runsThisWeek}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[15px] font-semibold">
+                        {successRate(route)}
+                      </span>
+                      <span className="text-[9px] text-[#92928d]">
+                        {copy.routes.success}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="block text-[15px] font-semibold">
+                        {route.hours}h
+                      </span>
+                      <span className="text-[9px] text-[#92928d]">
+                        {copy.routes.savedPerWeek}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block text-[15px] font-semibold">
-                      {route.hours}h
-                    </span>
-                    <span className="text-[9px] text-[#92928d]">
-                      {copy.routes.savedPerWeek}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-5 flex items-center justify-between opacity-0 transition group-hover:opacity-100">
-                  <button
-                    type="button"
-                    aria-label={copy.routes.deleteRoute(route.title)}
-                    disabled={deletingRoute}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setConfirmingDeleteRouteId(route.id);
-                    }}
-                    className="pressable grid h-8 w-8 place-items-center rounded-full text-[#999994] hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-                  >
-                    <HugeiconsIcon icon={Delete02Icon} size={13} />
-                  </button>
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-[#686863]">
-                    {copy.routes.openRoute}{" "}
-                    <HugeiconsIcon icon={ChevronRightIcon} size={12} />
-                  </span>
                 </div>
               </motion.article>
             ))}
@@ -4230,8 +4301,8 @@ function Routes({
     );
   return (
     <div
-      className="grid h-screen overflow-hidden"
-      style={{ gridTemplateColumns: `minmax(0, 1fr) 6px ${historyWidth}px` }}
+      className="route-layout grid h-[100dvh] overflow-hidden lg:h-screen"
+      style={{ ["--history-width" as string]: `${historyWidth}px` }}
     >
       <div className="min-w-0">
         <ShellHeader
@@ -4240,7 +4311,15 @@ function Routes({
           back={() => setSelected(undefined)}
           backLabel={copy.routes.backToRoutes}
           action={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                aria-label={sideTab === "chat" ? chatCopy.tab : chatCopy.historyTab}
+                onClick={() => setMobilePanelOpen(true)}
+                className="pressable grid h-10 w-10 place-items-center rounded-full bg-black/[.055] text-[#777772] hover:bg-black/[.08] lg:hidden"
+              >
+                <HugeiconsIcon icon={BotIcon} size={15} />
+              </button>
               <button
                 type="button"
                 aria-label={copy.routes.deleteRoute(selected.title)}
@@ -4256,7 +4335,7 @@ function Routes({
               </button>
               <Button
                 onClick={() => void runRoute()}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap px-3 sm:px-4"
                 disabled={
                   deletingRoute ||
                   generatingRoute ||
@@ -4271,8 +4350,8 @@ function Routes({
                     <LoadingOrb
                       state={generatingRoute ? "weaving" : "solving"}
                       theme="dark"
-                    />{" "}
-                    {copy.routes.running}
+                    />
+                    <span className="hidden sm:inline">{copy.routes.running}</span>
                   </>
                 ) : (
                   <>
@@ -4280,15 +4359,15 @@ function Routes({
                       icon={PlayIcon}
                       size={13}
                       fill="currentColor"
-                    />{" "}
-                    {copy.routes.runRoute}
+                    />
+                    <span className="hidden sm:inline">{copy.routes.runRoute}</span>
                   </>
                 )}
               </Button>
             </div>
           }
         />
-        <div className="relative h-[calc(100vh-82px)] min-w-0">
+        <div className="relative h-[calc(100dvh-72px)] min-w-0 sm:h-[calc(100vh-82px)]">
           <ReactFlowProvider>
             <ReactFlow
               nodes={nodes}
@@ -4311,7 +4390,7 @@ function Routes({
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 20 }}
                 transition={spring}
-                className="absolute bottom-5 right-5 top-5 z-20 w-[320px] rounded-[24px] bg-white/90 p-6 shadow-[0_20px_60px_rgba(0,0,0,.12)] backdrop-blur-2xl"
+                className="absolute inset-x-4 bottom-20 top-auto z-20 max-h-[min(70vh,520px)] overflow-y-auto rounded-[24px] bg-white/95 p-5 shadow-[0_20px_60px_rgba(0,0,0,.12)] backdrop-blur-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:top-5 sm:max-h-none sm:w-[320px] sm:p-6"
               >
                 <button
                   onClick={() => setInspected(null)}
@@ -4438,9 +4517,27 @@ function Routes({
             ),
           );
         }}
-        className="z-30 h-screen cursor-col-resize touch-none outline-none"
+        className="hidden h-screen cursor-col-resize touch-none outline-none lg:block"
       />
-      <aside className="flex h-screen min-h-0 flex-col bg-white/55 p-3 backdrop-blur-xl">
+      {mobilePanelOpen && (
+        <button
+          type="button"
+          aria-label="Close route panel"
+          className="fixed inset-0 z-40 bg-black/20 lg:hidden"
+          onClick={() => setMobilePanelOpen(false)}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 right-0 z-50 flex w-[min(100vw,360px)] min-h-0 flex-col bg-white/95 p-3 pt-12 backdrop-blur-xl transition-transform duration-200 ease-out lg:relative lg:inset-auto lg:z-auto lg:flex lg:h-screen lg:w-auto lg:translate-x-0 lg:bg-white/55 lg:pt-3 ${mobilePanelOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`}
+      >
+        <button
+          type="button"
+          aria-label="Close route panel"
+          onClick={() => setMobilePanelOpen(false)}
+          className="pressable absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-[#777772] hover:bg-black/[.06] lg:hidden"
+        >
+          <HugeiconsIcon icon={Cancel01Icon} size={15} />
+        </button>
         <div
           role="tablist"
           aria-label={routePanelLabel[lang]}
@@ -5102,14 +5199,19 @@ function Sources({
         title={copy.sources.title}
         subtitle={copy.sources.subtitle}
         action={
-          <span className="group relative inline-flex">
-            <Button disabled={!hasSources || generating} onClick={onGenerate}>
+          <span className="group relative inline-flex max-w-[52vw] sm:max-w-none">
+            <Button
+              disabled={!hasSources || generating}
+              onClick={onGenerate}
+              className="px-3 sm:px-4"
+            >
               {generating ? (
                 <LoadingOrb state="searching" theme="dark" />
               ) : (
                 <HugeiconsIcon icon={SparklesIcon} size={13} />
               )}
-              Generate opportunities
+              <span className="hidden sm:inline">Generate opportunities</span>
+              <span className="sm:hidden">Generate</span>
             </Button>
             {!hasSources && (
               <span
@@ -5122,7 +5224,7 @@ function Sources({
           </span>
         }
       />
-      <div className="mx-auto max-w-[920px] p-10">
+      <div className="mx-auto max-w-[920px] px-4 py-6 sm:p-10">
         <section>
           <h2 className="text-[13px] font-semibold">
             {copy.sources.connectedSystems}
@@ -5838,41 +5940,42 @@ export function LocalDashboard() {
       value={{ lang: "en", setLang: () => {}, copy: translations.en }}
     >
       <div className="min-h-screen bg-[#f7f7f5]">
-        <Sidebar
-          view={view}
-          setView={setView}
-          routes={routes}
-          selected={selected}
-          selectRoute={(id) => {
-            setSelected(id);
-            setView("Routes");
-          }}
-          showRoutes={() => {
-            setSelected(undefined);
-            setView("Routes");
-          }}
-          opportunities={opportunities}
-          selectOpportunity={(id) => {
-            setView("Opportunities");
-            setTimeout(
-              () =>
-                document
-                  .getElementById(`opportunity-${id}`)
-                  ?.scrollIntoView({ behavior: "smooth" }),
-              50,
-            );
-          }}
-          reset={() => setView("Routes")}
-          contact={() => {}}
-          account={{
-            name: workspace.workspace?.name || profileName || "Your profile",
-            email: workspace.user.email,
-            avatar,
-            onAvatarChange: changeAvatar,
-            onReset: () => setResetOpen(true),
-          }}
-        />
-        <main className="ml-[250px] min-h-screen">
+        <SidebarMobileProvider>
+          <Sidebar
+            view={view}
+            setView={setView}
+            routes={routes}
+            selected={selected}
+            selectRoute={(id) => {
+              setSelected(id);
+              setView("Routes");
+            }}
+            showRoutes={() => {
+              setSelected(undefined);
+              setView("Routes");
+            }}
+            opportunities={opportunities}
+            selectOpportunity={(id) => {
+              setView("Opportunities");
+              setTimeout(
+                () =>
+                  document
+                    .getElementById(`opportunity-${id}`)
+                    ?.scrollIntoView({ behavior: "smooth" }),
+                50,
+              );
+            }}
+            reset={() => setView("Routes")}
+            contact={() => {}}
+            account={{
+              name: workspace.workspace?.name || profileName || "Your profile",
+              email: workspace.user.email,
+              avatar,
+              onAvatarChange: changeAvatar,
+              onReset: () => setResetOpen(true),
+            }}
+          />
+          <main className="min-h-screen lg:ml-[250px]">
           {view === "Routes" && (
             <Routes
               routes={routes}
@@ -5914,7 +6017,8 @@ export function LocalDashboard() {
               }}
             />
           )}
-        </main>
+          </main>
+        </SidebarMobileProvider>
         {setupOpen && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-black/20 p-5 backdrop-blur-[4px]">
             <motion.section
@@ -5924,7 +6028,7 @@ export function LocalDashboard() {
               initial={{ opacity: 0, scale: 0.97, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={spring}
-              className="w-full max-w-[720px] rounded-[28px] bg-white p-7 shadow-[0_30px_100px_rgba(0,0,0,.2)]"
+              className="w-full max-w-[720px] rounded-[28px] bg-white p-5 shadow-[0_30px_100px_rgba(0,0,0,.2)] sm:p-7"
             >
               <div className="flex items-center justify-between">
                 <Logo />
@@ -6404,7 +6508,7 @@ export default function Home() {
         {!inApp ? (
           <Landing explore={exploreExample} />
         ) : (
-          <>
+          <SidebarMobileProvider>
             <Sidebar
               view={view}
               setView={setView}
@@ -6431,7 +6535,7 @@ export default function Home() {
               contact={contact}
               isExample={isExample}
             />
-            <main className="ml-[250px] min-h-screen">
+            <main className="min-h-screen lg:ml-[250px]">
               {view === "Routes" && (
                 <Routes
                   routes={routes}
@@ -6478,7 +6582,7 @@ export default function Home() {
                 />
               )}
             </main>
-          </>
+          </SidebarMobileProvider>
         )}
       </div>
     </LocaleContext.Provider>
