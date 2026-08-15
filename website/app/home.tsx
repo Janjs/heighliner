@@ -51,7 +51,13 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from "@xyflow/react";
+import dynamic from "next/dynamic";
 import { LoadingOrb } from "../components/loading-orb";
+
+const HeroGradient = dynamic(
+  () => import("../components/hero-gradient").then((mod) => mod.HeroGradient),
+  { ssr: false },
+);
 
 export type View = "Routes" | "Opportunities" | "Sources";
 type Lang = "en" | "es" | "nl";
@@ -2048,12 +2054,12 @@ function Landing({ explore }: { explore: () => void }) {
   };
   return (
     <div className="min-h-screen overflow-hidden bg-[#f7f7f5] px-5 text-[#20201f] sm:px-7 lg:px-10">
-      <header className="mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between sm:h-20">
+      <header className="relative z-30 mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between overflow-visible sm:h-20">
         <Logo />
         <div className="flex items-center gap-3 sm:gap-5">
           <a
             href="#contact"
-            className="pressable hidden text-[12px] font-medium text-[#696964] hover:text-black sm:inline"
+            className="pressable hidden text-[12px] font-medium text-[#444440] hover:text-black sm:inline"
           >
             {copy.navContact}
           </a>
@@ -2094,7 +2100,7 @@ function Landing({ explore }: { explore: () => void }) {
             aria-label="Heighliner dashboard preview"
             className="group relative min-w-0 lg:w-[143%]"
           >
-            <div className="absolute inset-x-[12%] bottom-0 h-2/3 rounded-full bg-[#ff7a35]/15 blur-[100px]" />
+            <HeroGradient />
             <div className="relative rounded-[28px] border border-black/[.08] bg-[#e9e9e6] p-2 shadow-[0_35px_100px_rgba(27,27,25,.14)] transition-[filter] duration-200 ease-[cubic-bezier(.23,1,.32,1)] group-hover:blur-[3px] group-focus-within:blur-[3px] sm:rounded-[36px] sm:p-3">
               <div className="grid min-h-[380px] overflow-hidden rounded-[22px] bg-[#f7f7f5] sm:min-h-[520px] sm:rounded-[28px] xl:grid-cols-[150px_1fr]">
                 <aside className="hidden min-h-full flex-col border-r border-black/[.06] bg-white/70 p-4 xl:flex">
@@ -2814,14 +2820,14 @@ function LanguageSwitcher() {
   const { lang, setLang } = useLocale();
 
   return (
-    <details className="group relative">
+    <details className="group relative z-50">
       <summary
         aria-label="Language"
-        className="pressable cursor-pointer list-none text-[11px] font-medium text-[#8a8a85] hover:text-[#292927] [&::-webkit-details-marker]:hidden"
+        className="pressable cursor-pointer list-none text-[11px] font-medium text-[#444440] hover:text-[#20201f] [&::-webkit-details-marker]:hidden"
       >
         {lang.toUpperCase()}
       </summary>
-      <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[9.5rem] overflow-hidden rounded-xl border border-black/[.06] bg-white/95 py-1 shadow-[0_8px_24px_rgba(0,0,0,.08)] backdrop-blur-xl">
+      <div className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[9.5rem] overflow-hidden rounded-xl border border-black/[.06] bg-white py-1 shadow-[0_8px_24px_rgba(0,0,0,.08)]">
         {(Object.keys(languageLabels) as Lang[]).map((option) => (
           <button
             key={option}
