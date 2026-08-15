@@ -1,1 +1,1 @@
-export { LocalDashboard as default } from "../../website/app/page";
+export { default } from "../../website/app/local-dashboard";
