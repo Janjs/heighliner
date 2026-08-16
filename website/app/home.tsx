@@ -51,13 +51,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
 } from "@xyflow/react";
-import dynamic from "next/dynamic";
 import { LoadingOrb } from "../components/loading-orb";
-
-const HeroGradient = dynamic(
-  () => import("../components/hero-gradient").then((mod) => mod.HeroGradient),
-  { ssr: false },
-);
 
 export type View = "Routes" | "Opportunities" | "Sources";
 type Lang = "en" | "es" | "nl";
@@ -2098,10 +2092,9 @@ function Landing({ explore }: { explore: () => void }) {
 
           <div
             aria-label="Heighliner dashboard preview"
-            className="group relative min-w-0 lg:w-[143%]"
+            className="relative min-w-0 lg:w-[143%]"
           >
-            <HeroGradient />
-            <div className="relative rounded-[28px] border border-black/[.08] bg-[#e9e9e6] p-2 shadow-[0_35px_100px_rgba(27,27,25,.14)] transition-[filter] duration-200 ease-[cubic-bezier(.23,1,.32,1)] group-hover:blur-[3px] group-focus-within:blur-[3px] sm:rounded-[36px] sm:p-3">
+            <div className="relative rounded-[28px] border border-black/[.08] bg-[#e9e9e6] p-2 shadow-[0_35px_100px_rgba(27,27,25,.14)] sm:rounded-[36px] sm:p-3">
               <div className="grid min-h-[380px] overflow-hidden rounded-[22px] bg-[#f7f7f5] sm:min-h-[520px] sm:rounded-[28px] xl:grid-cols-[150px_1fr]">
                 <aside className="hidden min-h-full flex-col border-r border-black/[.06] bg-white/70 p-4 xl:flex">
                   <Logo />
